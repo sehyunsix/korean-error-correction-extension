@@ -766,6 +766,15 @@ async function highlightErrorsWithSavedSelection(bodyElement, savedSelectionInfo
 }
 
 /**
+ * 선택된 텍스트에 API 기반 하이라이트 적용 (호환성 유지용)
+ */
+async function highlightErrors(bodyElement) {
+  console.log('\n=== highlightErrors 호출 (호환성 유지) ===');
+  const selectionInfo = getSelectedText();
+  return await highlightErrorsWithSavedSelection(bodyElement, selectionInfo);
+}
+
+/**
  * 메시지 리스너
  */
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
