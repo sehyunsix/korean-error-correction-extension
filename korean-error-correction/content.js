@@ -205,31 +205,52 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
     padding: 0;
     width: 480px;
     max-width: calc(100vw - 32px);
-    max-height: 600px;
+    max-height: calc(100vh - 80px);
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
     animation: modalSlideIn 0.3s ease;
   `;
   
-  // 애니메이션 스타일 추가
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes modalFadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    @keyframes modalSlideIn {
-      from {
-        opacity: 0;
-        transform: translateY(-20px) scale(0.95);
+  // 애니메이션 및 스크롤바 스타일 추가
+  if (!document.getElementById('modal-styles')) {
+    const style = document.createElement('style');
+    style.id = 'modal-styles';
+    style.textContent = `
+      @keyframes modalFadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
       }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
+      @keyframes modalSlideIn {
+        from {
+          opacity: 0;
+          transform: translateY(-20px) scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
       }
-    }
-  `;
-  document.head.appendChild(style);
+      
+      /* 웹킷 스크롤바 스타일 */
+      .modal-scroll-content::-webkit-scrollbar {
+        width: 8px;
+      }
+      .modal-scroll-content::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+      }
+      .modal-scroll-content::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+      }
+      .modal-scroll-content::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+      }
+    `;
+    document.head.appendChild(style);
+  }
 
   // 수정 전 텍스트에 오류 하이라이트 적용
   let highlightedOriginalText = originalText;
@@ -280,9 +301,9 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
     </div>
   `;
   
-  // 텍스트 비교 HTML
+  // 텍스트 비교 HTML (스크롤 영역)
   const comparisonHTML = originalText !== correctedText ? `
-    <div style="padding: 24px; max-height: 50vh; overflow-y: auto;">
+    <div style="padding: 24px;">
       <div style="margin-bottom: 20px;">
         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
           <div style="width: 4px; height: 20px; background: #ef4444; border-radius: 2px;"></div>
@@ -303,7 +324,7 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
       <div style="padding: 20px; background: #d1fae5; border: 1px solid #a7f3d0; border-radius: 10px; text-align: center;">
         <div style="font-size: 48px; margin-bottom: 12px;">🎉</div>
         <div style="font-weight: 600; color: #065f46; margin-bottom: 8px; font-size: 16px;">텍스트가 완벽합니다</div>
-        <div style="line-height: 1.8; white-space: pre-wrap; word-break: break-word; color: #1f2937; font-size: 14px; max-height: 200px; overflow-y: auto;">${originalText}</div>
+        <div style="line-height: 1.8; white-space: pre-wrap; word-break: break-word; color: #1f2937; font-size: 14px;">${originalText}</div>
       </div>
     </div>
   `;
@@ -396,10 +417,17 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
 
   modalContent.innerHTML = `
     ${headerHTML}
-    ${comparisonHTML}
-    ${buttonsHTML}
+    <div class="modal-scroll-content" style="
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e1 #f1f5f9;
+    ">
+      ${comparisonHTML}
+    </div>
     <div id="action-status" style="
-      margin: 0 24px 20px 24px;
+      margin: 0 24px 12px 24px;
       padding: 12px;
       border-radius: 8px;
       text-align: center;
@@ -407,6 +435,7 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
       font-weight: 500;
       display: none;
     "></div>
+    ${buttonsHTML}
   `;
 
   modal.appendChild(modalContent);
