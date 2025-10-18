@@ -164,10 +164,10 @@ function showCorrectionModal(title, originalText, correctedText, errors) {
       
       console.log('✅ 클립보드 복사 성공:', correctedText.substring(0, 50) + '...');
       
-      // 2초 후 모달 자동 닫기
+      // 0.5초 후 모달 자동 닫기 (메시지를 볼 수 있도록 짧은 딜레이)
       setTimeout(() => {
         modal.remove();
-      }, 2000);
+      }, 500);
     } catch (error) {
       console.error('❌ 클립보드 복사 실패:', error);
       copyStatus.textContent = '❌ 복사 실패. 다시 시도해주세요.';
