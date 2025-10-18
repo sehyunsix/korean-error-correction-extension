@@ -101,6 +101,26 @@ function createGeminiPrompt(text) {
 3. token(오류 단어)과 suggestions(교정 단어)가 같으면 안 됩니다
 4. 띄어쓰기, 문법, 맞춤법 오류만 찾아주세요
 
+**영어 단어 처리 규칙 (매우 중요!):**
+다음과 같은 영어는 **절대 오류로 판단하지 마세요**:
+- 프로그래밍 언어: JavaScript, Python, React, Vue, TypeScript, Java, C++, Ruby, Go, Rust 등
+- 라이브러리/프레임워크: npm, webpack, Redux, Django, Flask, Express, Next.js, Nuxt 등
+- 기술 용어: API, HTTP, HTTPS, JSON, XML, CSS, HTML, REST, GraphQL, SQL 등
+- 메서드/함수명: useState, useEffect, onClick, getElementById, querySelector 등
+- 파일 확장자: .js, .py, .tsx, .json, .css, .html, .md 등
+- 패키지/모듈: axios, lodash, moment, dayjs 등
+- 일반 영어 단어: import, export, function, class, const, let, var 등
+
+**영어-한국어 혼용 허용 예시:**
+✅ "React를 사용해서 개발했습니다" (정상)
+✅ "API 호출이 실패했어요" (정상)
+✅ "useState로 상태를 관리합니다" (정상)
+✅ "JavaScript와 Python을 배웠습니다" (정상)
+✅ "npm install로 설치하세요" (정상)
+
+❌ "이건 않돼요" → "안 돼요" (오류)
+❌ "되요" → "돼요" (오류)
+
 다음 JSON 형식으로 응답해주세요:
 {
   "errors": [
