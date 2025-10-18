@@ -373,8 +373,10 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
             savedRange.deleteContents();
             console.log('✅ 기존 내용 삭제 완료');
             
-            savedRange.insertNode(iframeDoc.createTextNode(correctedText));
-            console.log('✅ 새 텍스트 삽입 완료');
+            // 하이라이트와 hover가 적용된 텍스트 삽입
+            const fragment = createCorrectedTextWithTooltip(originalText, correctedText, errors);
+            savedRange.insertNode(fragment);
+            console.log('✅ 새 텍스트 삽입 완료 (hover 기능 포함)');
             
             // 선택 해제 및 커서를 끝으로 이동
             iframeSelection.removeAllRanges();
@@ -403,12 +405,14 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
           const range = selection.getRangeAt(0);
           
           try {
-            // 기존 내용 삭제 및 새 텍스트 삽입
+            // 기존 내용 삭제
             range.deleteContents();
             console.log('✅ 기존 내용 삭제 완료');
             
-            range.insertNode(document.createTextNode(correctedText));
-            console.log('✅ 새 텍스트 삽입 완료');
+            // 하이라이트와 hover가 적용된 텍스트 삽입
+            const fragment = createCorrectedTextWithTooltip(originalText, correctedText, errors);
+            range.insertNode(fragment);
+            console.log('✅ 새 텍스트 삽입 완료 (hover 기능 포함)');
             
             // 선택 해제 및 커서를 끝으로 이동
             selection.removeAllRanges();
@@ -953,17 +957,7 @@ async function handleShortcut(e) {
   // Cmd+E (Mac) 또는 Ctrl+E (Windows/Linux) - Shift 불필요!
   const isEKey = e.key === 'E' || e.key === 'e' || e.key === 'ㄸ' || e.key === 'ㄷ' ;
 
-  if(e.metaKey || e.ctrlKey) {
-    console.log('Cmd+E 또는 Ctrl+E 단축키 감지!', e.metaKey, e.ctrlKey);
-  }
 
-  if(isEKey) {
-    console.log('E 키 감지!', e.key);
-  }
-
-  if(e.shiftKey) {
-    console.log('Shift 키 감지!', e.shiftKey);
-  }
 
   
   if ((e.metaKey || e.ctrlKey||e.shiftKey) && isEKey ) {
