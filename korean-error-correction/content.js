@@ -950,7 +950,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // 키보드 단축키 감지 함수
 async function handleShortcut(e) {
-  // Cmd+Shift+E (Mac) 또는 Ctrl+Shift+E (Windows/Linux)
+  // Cmd+E (Mac) 또는 Ctrl+E (Windows/Linux) - Shift 불필요!
   const isEKey = e.key === 'E' || e.key === 'e' || e.code === 'KeyE';
   const windowSelection = window.getSelection();
 
@@ -958,7 +958,7 @@ async function handleShortcut(e) {
   
   if ((e.metaKey || e.ctrlKey) && isEKey && windowSelection && windowSelection.rangeCount > 0) {
     // 🔥🔥🔥 최우선: 즉시 selection 저장 (로그보다 먼저!)
-    console.log('⌨️⌨️⌨️ 단축키 감지! Cmd+Shift+E ⌨️⌨️⌨️');
+    console.log('⌨️⌨️⌨️ 단축키 감지! Cmd+E ⌨️⌨️⌨️');
     // 이벤트 차단보다도 먼저 selection을 캡처해야 함
     const activeElement = document.activeElement;
 
