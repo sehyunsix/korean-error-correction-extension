@@ -1,9 +1,15 @@
 # 한글 맞춤법 검사기 (Korean Spell Checker)
 
-![Version](https://img.shields.io/badge/version-3.9.5-blue.svg)
+![Version](https://img.shields.io/badge/version-4.1.4-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 **선택한 텍스트의 맞춤법을 Gemini AI로 빠르고 정확하게 검사하는 Chrome 확장 프로그램**
+
+## 🎬 데모
+
+![사용 데모](korean-error-correction-ediet-3.gif)
+
+*텍스트를 선택하고 `Cmd+Shift+E`를 누르면 맞춤법 검사가 실행됩니다!*
 
 ## ✨ 주요 기능
 
