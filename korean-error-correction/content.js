@@ -14,7 +14,7 @@
 /**
  * 교정 결과를 표시하는 모달 생성
  */
-function showCorrectionModal(title, originalText, correctedText, errors) {
+function showCorrectionModal(title, originalText, correctedText, errors, selectionInfo = null) {
   // 기존 모달 제거
   const existingModal = document.getElementById('spelling-correction-modal');
   if (existingModal) {
@@ -86,12 +86,52 @@ function showCorrectionModal(title, originalText, correctedText, errors) {
     </div>
   `;
 
-  modalContent.innerHTML = `
-    <div style="font-size: 20px; font-weight: bold; margin-bottom: 16px; color: #333;">
-      ${title}
+  // 버튼 HTML 생성 (selectionInfo가 있으면 수정하기 버튼 추가)
+  const buttonsHTML = selectionInfo ? `
+    <div style="display: flex; gap: 8px; margin-top: 20px;">
+      <button id="replace-text" style="
+        flex: 1;
+        padding: 12px 20px;
+        background: #2196f3;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+      ">
+        ✏️ 수정하기
+      </button>
+      <button id="copy-corrected-text" style="
+        flex: 1;
+        padding: 12px 20px;
+        background: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+      ">
+        📋 복사
+      </button>
+      <button id="close-modal" style="
+        padding: 12px 20px;
+        background: #9e9e9e;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+      ">
+        닫기
+      </button>
     </div>
-    ${errorListHTML}
-    ${comparisonHTML}
+  ` : `
     <div style="display: flex; gap: 8px; margin-top: 20px;">
       <button id="copy-corrected-text" style="
         flex: 1;
@@ -121,7 +161,16 @@ function showCorrectionModal(title, originalText, correctedText, errors) {
         닫기
       </button>
     </div>
-    <div id="copy-status" style="
+  `;
+
+  modalContent.innerHTML = `
+    <div style="font-size: 20px; font-weight: bold; margin-bottom: 16px; color: #333;">
+      ${title}
+    </div>
+    ${errorListHTML}
+    ${comparisonHTML}
+    ${buttonsHTML}
+    <div id="action-status" style="
       margin-top: 12px;
       padding: 8px;
       border-radius: 6px;
@@ -134,11 +183,86 @@ function showCorrectionModal(title, originalText, correctedText, errors) {
   modal.appendChild(modalContent);
   document.body.appendChild(modal);
 
-  // 버튼 hover 효과
+  // 버튼 요소 가져오기
+  const replaceBtn = modalContent.querySelector('#replace-text');
   const copyBtn = modalContent.querySelector('#copy-corrected-text');
   const closeBtn = modalContent.querySelector('#close-modal');
-  const copyStatus = modalContent.querySelector('#copy-status');
+  const actionStatus = modalContent.querySelector('#action-status');
 
+  // 수정하기 버튼 (selectionInfo가 있을 때만)
+  if (replaceBtn && selectionInfo) {
+    replaceBtn.addEventListener('mouseenter', () => {
+      replaceBtn.style.background = '#1976d2';
+    });
+    replaceBtn.addEventListener('mouseleave', () => {
+      replaceBtn.style.background = '#2196f3';
+    });
+
+    replaceBtn.addEventListener('click', () => {
+      try {
+        let success = false;
+
+        // Input/Textarea 필드
+        if (selectionInfo.type === 'input' && selectionInfo.element) {
+          const element = selectionInfo.element;
+          const start = selectionInfo.start;
+          const end = selectionInfo.end;
+          
+          // 값 대체
+          element.value = element.value.substring(0, start) + correctedText + element.value.substring(end);
+          
+          // 커서 위치 설정 (교정된 텍스트 끝으로)
+          const newCursorPos = start + correctedText.length;
+          element.setSelectionRange(newCursorPos, newCursorPos);
+          element.focus();
+          
+          success = true;
+          console.log('✅ Input/Textarea 텍스트 대체 성공');
+        }
+        // iframe 필드
+        else if (selectionInfo.type === 'iframe' && selectionInfo.selection && selectionInfo.iframeWindow) {
+          const iframeSelection = selectionInfo.selection;
+          const iframeDoc = selectionInfo.iframeWindow.document;
+          
+          if (iframeSelection.rangeCount > 0) {
+            const range = iframeSelection.getRangeAt(0);
+            range.deleteContents();
+            range.insertNode(iframeDoc.createTextNode(correctedText));
+            
+            // 선택 해제 및 커서를 끝으로 이동
+            iframeSelection.removeAllRanges();
+            range.collapse(false);
+            iframeSelection.addRange(range);
+            
+            success = true;
+            console.log('✅ iframe 텍스트 대체 성공');
+          }
+        }
+
+        if (success) {
+          actionStatus.textContent = '✅ 텍스트가 수정되었습니다!';
+          actionStatus.style.background = '#e8f5e9';
+          actionStatus.style.color = '#388e3c';
+          actionStatus.style.display = 'block';
+          
+          // 0.5초 후 모달 닫기
+          setTimeout(() => {
+            modal.remove();
+          }, 500);
+        } else {
+          throw new Error('텍스트 대체 실패');
+        }
+      } catch (error) {
+        console.error('❌ 텍스트 대체 오류:', error);
+        actionStatus.textContent = '❌ 텍스트 수정 실패. 복사 버튼을 이용해주세요.';
+        actionStatus.style.background = '#ffebee';
+        actionStatus.style.color = '#d32f2f';
+        actionStatus.style.display = 'block';
+      }
+    });
+  }
+
+  // 복사 버튼 hover 효과
   copyBtn.addEventListener('mouseenter', () => {
     copyBtn.style.background = '#45a049';
   });
@@ -157,23 +281,23 @@ function showCorrectionModal(title, originalText, correctedText, errors) {
   copyBtn.addEventListener('click', async () => {
     try {
       await navigator.clipboard.writeText(correctedText);
-      copyStatus.textContent = '✅ 클립보드에 복사되었습니다!';
-      copyStatus.style.background = '#e8f5e9';
-      copyStatus.style.color = '#388e3c';
-      copyStatus.style.display = 'block';
+      actionStatus.textContent = '✅ 클립보드에 복사되었습니다!';
+      actionStatus.style.background = '#e8f5e9';
+      actionStatus.style.color = '#388e3c';
+      actionStatus.style.display = 'block';
       
       console.log('✅ 클립보드 복사 성공:', correctedText.substring(0, 50) + '...');
       
-      // 0.5초 후 모달 자동 닫기 (메시지를 볼 수 있도록 짧은 딜레이)
+      // 0.5초 후 모달 자동 닫기
       setTimeout(() => {
         modal.remove();
       }, 500);
     } catch (error) {
       console.error('❌ 클립보드 복사 실패:', error);
-      copyStatus.textContent = '❌ 복사 실패. 다시 시도해주세요.';
-      copyStatus.style.background = '#ffebee';
-      copyStatus.style.color = '#d32f2f';
-      copyStatus.style.display = 'block';
+      actionStatus.textContent = '❌ 복사 실패. 다시 시도해주세요.';
+      actionStatus.style.background = '#ffebee';
+      actionStatus.style.color = '#d32f2f';
+      actionStatus.style.display = 'block';
     }
   });
 
@@ -411,7 +535,7 @@ async function highlightErrors(bodyElement) {
     // Input/Textarea 또는 iframe 필드인 경우 (하이라이트 불가)
     if (selectionInfo.type === 'input' || selectionInfo.type === 'iframe') {
       if (errors.length === 0) {
-        showCorrectionModal('✅ 오류가 없습니다!', selectedText, selectedText, []);
+        showCorrectionModal('✅ 오류가 없습니다!', selectedText, selectedText, [], selectionInfo);
         console.log(`✅ ${selectionInfo.type} 필드 - 오류 없음`);
         STATE.lastCheckStats.foundErrors = 0;
         return 0;
@@ -427,7 +551,8 @@ async function highlightErrors(bodyElement) {
         `🔴 ${errors.length}개의 오류 발견`,
         selectedText,
         correctedText,
-        errors
+        errors,
+        selectionInfo
       );
       
       console.log(`🔴 ${selectionInfo.type} 필드 - ${errors.length}개의 오류 발견`);
