@@ -951,11 +951,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // 키보드 단축키 감지 함수
 async function handleShortcut(e) {
-  // Cmd+Shift+K (Mac) 또는 Ctrl+Shift+K (Windows/Linux)
-  const isKKey = e.key === 'K' || e.key === 'k' || e.code === 'KeyK';
+  // Cmd+Shift+E (Mac) 또는 Ctrl+Shift+E (Windows/Linux)
+  const isEKey = e.key === 'E' || e.key === 'e' || e.code === 'KeyE';
   const isModifiers = (e.metaKey || e.ctrlKey) && e.shiftKey && !e.altKey;
   
-  if (isKKey && isModifiers) {
+  if (isEKey && isModifiers) {
     // 🔥🔥🔥 최우선: 즉시 selection 저장 (로그보다 먼저!)
     // 이벤트 차단보다도 먼저 selection을 캡처해야 함
     const windowSelection = window.getSelection();
@@ -986,7 +986,7 @@ async function handleShortcut(e) {
     e.stopImmediatePropagation();
     
     console.log('');
-    console.log('⌨️⌨️⌨️ 단축키 감지! Cmd+Shift+K ⌨️⌨️⌨️');
+    console.log('⌨️⌨️⌨️ 단축키 감지! Cmd+Shift+E ⌨️⌨️⌨️');
     console.log('💾 즉시 저장한 selection:', savedText?.substring(0, 50) || '(없음)');
     console.log('💾 savedText 길이:', savedText?.length || 0);
     console.log('💾 activeElement:', activeElement?.tagName);
@@ -1018,23 +1018,23 @@ async function handleShortcut(e) {
 }
 
 // 다중 레벨 이벤트 리스너 등록 (최대한 빨리, 강력하게)
-// 1. Window 레벨 (최상위)
-window.addEventListener('keydown', handleShortcut, true);
+// 1. Window 레벨 (최상위, passive: false로 이벤트 차단 가능하게)
+window.addEventListener('keydown', handleShortcut, { capture: true, passive: false });
 
 // 2. Document 레벨 (백업)
-document.addEventListener('keydown', handleShortcut, true);
+document.addEventListener('keydown', handleShortcut, { capture: true, passive: false });
 
 // 3. Document.body 레벨 (추가 백업) - DOM 로드 후
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     if (document.body) {
-      document.body.addEventListener('keydown', handleShortcut, true);
+      document.body.addEventListener('keydown', handleShortcut, { capture: true, passive: false });
       console.log('✅ Body 레벨 단축키 리스너 등록 완료');
     }
   });
 } else {
   if (document.body) {
-    document.body.addEventListener('keydown', handleShortcut, true);
+    document.body.addEventListener('keydown', handleShortcut, { capture: true, passive: false });
     console.log('✅ Body 레벨 단축키 리스너 등록 완료');
   }
 }
@@ -1042,7 +1042,7 @@ if (document.readyState === 'loading') {
 // 확장 프로그램 로드 확인
 console.log('');
 console.log('🎉 한글 맞춤법 검사기 Content Script 로드 완료!');
-console.log('⌨️  단축키 Cmd+Shift+K (Mac) / Ctrl+Shift+K (Windows)');
+console.log('⌨️  단축키 Cmd+Shift+E (Mac) / Ctrl+Shift+E (Windows)');
 console.log('🖱️  또는 텍스트 선택 후 우클릭 → 맞춤법 검사');
 console.log('✅ Window + Document + Body 3중 리스너 등록');
 console.log('📍 Run at: document_start');
