@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "한글 맞춤법 검사기",
-  "version": "4.1.4",
-  "version_name": "4.1.4 - 스크린샷 및 웹 스토어 준비",
+  "version": "4.1.5",
+  "version_name": "4.1.5 - 광범위한 호스트 권한 제거",
   "description": "선택한 텍스트를 Gemini AI로 검사하고 자동 교정하는 맞춤법 검사기 (Cmd+Shift+E)",
   "permissions": [
     "activeTab",
@@ -19,8 +19,6 @@
     }
   },
   "host_permissions": [
-    "http://*/*",
-    "https://*/*",
     "https://generativelanguage.googleapis.com/*"
   ],
   "action": {
