@@ -967,11 +967,15 @@ async function handleShortcut(e) {
     let savedRange = null;
     
     if (windowSelection && windowSelection.rangeCount > 0) {
-      savedText = windowSelection.toString();
-      try {
-        savedRange = windowSelection.getRangeAt(0).cloneRange();
-      } catch (e) {
-        // Range 복사 실패 시 무시
+      const textContent = windowSelection.toString();
+      // 빈 문자열이 아닐 때만 저장
+      if (textContent && textContent.trim()) {
+        savedText = textContent;
+        try {
+          savedRange = windowSelection.getRangeAt(0).cloneRange();
+        } catch (e) {
+          // Range 복사 실패 시 무시
+        }
       }
     }
     
@@ -982,8 +986,10 @@ async function handleShortcut(e) {
     
     console.log('');
     console.log('⌨️⌨️⌨️ 단축키 감지! Cmd+Shift+E ⌨️⌨️⌨️');
-    console.log('💾 즉시 저장한 selection:', savedText?.substring(0, 50));
+    console.log('💾 즉시 저장한 selection:', savedText?.substring(0, 50) || '(없음)');
+    console.log('💾 savedText 길이:', savedText?.length || 0);
     console.log('💾 activeElement:', activeElement?.tagName);
+    console.log('💾 rangeCount:', windowSelection?.rangeCount || 0);
     
     // 이제 getSelectedText() 호출 (저장된 정보 활용)
     const savedSelectionInfo = getSelectedTextWithPreserved(savedText, savedRange, activeElement);
