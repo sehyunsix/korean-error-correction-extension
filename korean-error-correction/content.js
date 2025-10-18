@@ -12,6 +12,88 @@
  */
 
 /**
+ * 로딩 모달 표시
+ */
+function showLoadingModal() {
+  // 기존 로딩 모달 제거
+  const existingModal = document.getElementById('spelling-loading-modal');
+  if (existingModal) {
+    existingModal.remove();
+  }
+
+  const modal = document.createElement('div');
+  modal.id = 'spelling-loading-modal';
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  `;
+
+  const loadingContent = document.createElement('div');
+  loadingContent.style.cssText = `
+    background: white;
+    border-radius: 12px;
+    padding: 40px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  `;
+
+  loadingContent.innerHTML = `
+    <div style="font-size: 48px; margin-bottom: 20px;">
+      <div class="spinner" style="
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #2196f3;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+      "></div>
+    </div>
+    <div style="font-size: 18px; font-weight: 600; color: #333; margin-bottom: 8px;">
+      🤖 AI가 검사 중입니다...
+    </div>
+    <div style="font-size: 14px; color: #666;">
+      잠시만 기다려주세요
+    </div>
+  `;
+
+  // 스피너 애니메이션 추가
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  `;
+  document.head.appendChild(style);
+
+  modal.appendChild(loadingContent);
+  document.body.appendChild(modal);
+  
+  console.log('⏳ 로딩 모달 표시');
+}
+
+/**
+ * 로딩 모달 숨김
+ */
+function hideLoadingModal() {
+  const modal = document.getElementById('spelling-loading-modal');
+  if (modal) {
+    modal.remove();
+    console.log('✅ 로딩 모달 제거');
+  }
+}
+
+/**
  * 교정 결과를 표시하는 모달 생성
  */
 function showCorrectionModal(title, originalText, correctedText, errors, selectionInfo = null) {
@@ -106,8 +188,14 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
     </div>
   `;
 
-  // 버튼 HTML 생성 (selectionInfo가 있으면 수정하기 버튼 추가)
-  const buttonsHTML = selectionInfo ? `
+  // 버튼 HTML 생성 (수정 가능한 타입이면 수정하기 버튼 추가)
+  const canEdit = selectionInfo && (
+    selectionInfo.type === 'input' || 
+    selectionInfo.type === 'iframe' || 
+    selectionInfo.type === 'contenteditable'
+  );
+  
+  const buttonsHTML = canEdit ? `
     <div style="display: flex; gap: 8px; margin-top: 20px;">
       <button id="replace-text" style="
         flex: 1;
@@ -298,6 +386,40 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
           } catch (rangeError) {
             console.error('❌ Range 조작 오류:', rangeError);
             throw new Error('텍스트 대체 중 오류가 발생했습니다. 페이지를 새로고침하고 다시 시도해주세요.');
+          }
+        }
+        // ContentEditable 필드
+        else if (selectionInfo.type === 'contenteditable') {
+          console.log('✏️ ContentEditable 대체 시도...');
+          console.log('📝 element:', selectionInfo.element);
+          console.log('📝 selection:', selectionInfo.selection);
+          
+          if (!selectionInfo.selection || selectionInfo.selection.rangeCount === 0) {
+            console.error('❌ Selection이 없습니다');
+            throw new Error('선택 범위를 찾을 수 없습니다. 텍스트를 다시 선택해주세요.');
+          }
+          
+          const selection = selectionInfo.selection;
+          const range = selection.getRangeAt(0);
+          
+          try {
+            // 기존 내용 삭제 및 새 텍스트 삽입
+            range.deleteContents();
+            console.log('✅ 기존 내용 삭제 완료');
+            
+            range.insertNode(document.createTextNode(correctedText));
+            console.log('✅ 새 텍스트 삽입 완료');
+            
+            // 선택 해제 및 커서를 끝으로 이동
+            selection.removeAllRanges();
+            range.collapse(false);
+            selection.addRange(range);
+            
+            success = true;
+            console.log('✅ ContentEditable 텍스트 대체 성공');
+          } catch (rangeError) {
+            console.error('❌ Range 조작 오류:', rangeError);
+            throw new Error('텍스트 대체 중 오류가 발생했습니다.');
           }
         } else {
           console.error('❌ 지원되지 않는 타입 또는 정보 부족');
@@ -580,8 +702,14 @@ async function highlightErrors(bodyElement) {
   clearHighlights();
 
   try {
+    // 로딩 모달 표시
+    showLoadingModal();
+    
     // API로 맞춤법 검사
     const result = await checkSpellingWithAPI(selectedText);
+    
+    // 로딩 모달 숨김
+    hideLoadingModal();
     
     if (result === null || result === undefined) {
       alert('맞춤법 검사에 실패했습니다. 콘솔을 확인하세요.');
@@ -606,61 +734,37 @@ async function highlightErrors(bodyElement) {
     
     const errors = Array.isArray(result) ? result : (result.errors || []);
 
-    // Input/Textarea 또는 iframe 필드인 경우 (하이라이트 불가)
-    if (selectionInfo.type === 'input' || selectionInfo.type === 'iframe') {
-      if (errors.length === 0) {
-        showCorrectionModal('✅ 오류가 없습니다!', selectedText, selectedText, [], selectionInfo);
-        console.log(`✅ ${selectionInfo.type} 필드 - 오류 없음`);
-        STATE.lastCheckStats.foundErrors = 0;
-  return 0;
-}
-
-      // Input/iframe 필드는 교정된 텍스트를 표시
-      let correctedText = selectedText;
-      for (const error of errors) {
-        correctedText = correctedText.replace(error.token, error.suggestions[0]);
-      }
-      
-      showCorrectionModal(
-        `🔴 ${errors.length}개의 오류 발견`,
-        selectedText,
-        correctedText,
-        errors,
-        selectionInfo
-      );
-      
-      console.log(`🔴 ${selectionInfo.type} 필드 - ${errors.length}개의 오류 발견`);
-      STATE.lastCheckStats.foundErrors = errors.length;
-      return errors.length;
+    // 교정된 텍스트 생성
+    let correctedText = selectedText;
+    for (const error of errors) {
+      correctedText = correctedText.replace(error.token, error.suggestions[0]);
     }
 
-    // 일반 텍스트 또는 ContentEditable인 경우
-    const selection = selectionInfo.selection || window.getSelection();
-    if (!selection || selection.rangeCount === 0) {
-      alert('범위를 다시 선택해주세요.');
-      return 0;
-    }
-
-    const range = selection.getRangeAt(0);
-
+    // 모든 경우에 모달 표시 (Google Docs, Sheets, 일반 HTML 모두 포함)
     if (errors.length === 0) {
-      // 오류 없음
-      console.log('✅ 오류 없음');
-      highlightSelectedRange(range, [], selectedText, false);
+      showCorrectionModal('✅ 오류가 없습니다!', selectedText, selectedText, [], selectionInfo);
+      console.log(`✅ ${selectionInfo.type} - 오류 없음`);
       STATE.lastCheckStats.foundErrors = 0;
       return 0;
     }
 
-    // 오류 하이라이트
-    console.log(`🔴 ${errors.length}개의 오류 발견`);
-    highlightSelectedRange(range, errors, selectedText, true);
-
+    showCorrectionModal(
+      `🔴 ${errors.length}개의 오류 발견`,
+      selectedText,
+      correctedText,
+      errors,
+      selectionInfo
+    );
+    
+    console.log(`🔴 ${selectionInfo.type} - ${errors.length}개의 오류 발견`);
     STATE.lastCheckStats.foundErrors = errors.length;
     return errors.length;
 
   } catch (error) {
-    console.error('❌ 하이라이트 오류:', error);
-    alert('하이라이트 적용 중 오류가 발생했습니다.');
+    // 로딩 모달 숨김 (오류 발생 시에도)
+    hideLoadingModal();
+    console.error('❌ 맞춤법 검사 오류:', error);
+    alert('맞춤법 검사 중 오류가 발생했습니다.');
     return 0;
   }
 }
