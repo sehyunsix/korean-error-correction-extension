@@ -856,22 +856,29 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'checkSpelling') {
     console.log('✅ 맞춤법 검사 액션 확인!');
     
-    // 🔥 즉시 selection 저장 (우클릭 메뉴용)
-    const windowSelection = window.getSelection();
-    const activeElement = document.activeElement;
-    let savedText = null;
-    let savedRange = null;
+    // 🔥 Chrome API에서 받은 selectionText 우선 사용!
+    let savedText = request.selectionText || null;  // ← background.js에서 받은 텍스트
+    console.log('💾 Background에서 받은 selectionText:', savedText?.substring(0, 50));
     
-    if (windowSelection && windowSelection.rangeCount > 0) {
-      savedText = windowSelection.toString();
-      try {
-        savedRange = windowSelection.getRangeAt(0).cloneRange();
-      } catch (e) {
-        console.warn('⚠️ Range 복사 실패:', e);
+    // 만약 없다면 현재 selection 시도 (fallback)
+    let savedRange = null;
+    const activeElement = document.activeElement;
+    
+    if (!savedText) {
+      console.log('⚠️ selectionText 없음, 현재 selection 확인...');
+      const windowSelection = window.getSelection();
+      
+      if (windowSelection && windowSelection.rangeCount > 0) {
+        savedText = windowSelection.toString();
+        try {
+          savedRange = windowSelection.getRangeAt(0).cloneRange();
+        } catch (e) {
+          console.warn('⚠️ Range 복사 실패:', e);
+        }
       }
+      console.log('💾 현재 selection:', savedText?.substring(0, 50));
     }
     
-    console.log('💾 우클릭 메뉴 - selection 즉시 저장:', savedText?.substring(0, 50));
     console.log('🚀 검사 시작...');
     
     (async () => {
