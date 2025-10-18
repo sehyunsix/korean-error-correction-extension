@@ -35,15 +35,21 @@ async function checkSpellingWithAPI(text) {
  * 선택된 텍스트 가져오기 (input/textarea/contenteditable 지원)
  */
 function getSelectedText() {
+  console.log('🔎 getSelectedText 함수 실행');
+  
   // 1. 활성 요소 확인
   const activeElement = document.activeElement;
+  console.log('🎯 activeElement:', activeElement);
+  console.log('🎯 activeElement.tagName:', activeElement?.tagName);
   
   // 2. Input/Textarea 필드인 경우
   if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+    console.log('📝 Input/Textarea 감지!');
     const start = activeElement.selectionStart;
     const end = activeElement.selectionEnd;
+    console.log(`📝 Selection: start=${start}, end=${end}`);
     
-    if (start !== end) {
+    if (start !== end && start !== null && end !== null) {
       const selectedText = activeElement.value.substring(start, end);
       console.log('📝 Input/Textarea에서 선택:', selectedText.substring(0, 100));
       return {
@@ -53,12 +59,17 @@ function getSelectedText() {
         start: start,
         end: end
       };
+    } else {
+      console.log('📝 Input/Textarea에 선택 없음');
     }
   }
   
   // 3. ContentEditable 요소인 경우
+  console.log('✏️ ContentEditable 확인:', activeElement?.isContentEditable);
   if (activeElement && activeElement.isContentEditable) {
+    console.log('✏️ ContentEditable 감지!');
     const selection = window.getSelection();
+    console.log('✏️ selection:', selection?.toString());
     if (selection && selection.toString().trim()) {
       console.log('✏️ ContentEditable에서 선택:', selection.toString().substring(0, 100));
       return {
@@ -71,7 +82,12 @@ function getSelectedText() {
   }
   
   // 4. 일반 텍스트 선택
+  console.log('📄 일반 텍스트 선택 확인...');
   const selection = window.getSelection();
+  console.log('📄 window.getSelection():', selection);
+  console.log('📄 selection.toString():', selection?.toString());
+  console.log('📄 selection.rangeCount:', selection?.rangeCount);
+  
   if (selection && selection.toString().trim()) {
     console.log('📄 일반 텍스트 선택:', selection.toString().substring(0, 100));
     return {
@@ -82,6 +98,7 @@ function getSelectedText() {
     };
   }
   
+  console.log('❌ 어떤 선택도 감지되지 않음!');
   return null;
 }
 
@@ -92,9 +109,16 @@ async function highlightErrors(bodyElement) {
   console.log('\n=== 선택된 텍스트 맞춤법 검사 시작 ===');
   
   // 선택된 텍스트 가져오기
+  console.log('🔍 getSelectedText() 호출...');
   const selectionInfo = getSelectedText();
+  console.log('📦 selectionInfo:', selectionInfo);
   
   if (!selectionInfo || !selectionInfo.text) {
+    console.warn('⚠️ 선택된 텍스트 없음!');
+    console.log('activeElement:', document.activeElement);
+    console.log('activeElement.tagName:', document.activeElement?.tagName);
+    console.log('window.getSelection():', window.getSelection()?.toString());
+    
     alert('텍스트를 선택해주세요.\n\n💡 Tip:\n- 마우스로 텍스트를 드래그하세요\n- Input 필드에서는 텍스트를 선택한 후 단축키를 누르세요');
     return 0;
   }
@@ -138,9 +162,9 @@ async function highlightErrors(bodyElement) {
         alert('✅ 오류가 없습니다!');
         console.log('✅ Input 필드 - 오류 없음');
         STATE.lastCheckStats.foundErrors = 0;
-        return 0;
-      }
-      
+  return 0;
+}
+
       // Input 필드는 교정된 텍스트를 표시
       const correctedText = errors.length > 0 
         ? errors.reduce((text, error) => text.replace(error.token, error.suggestions[0]), selectedText)
