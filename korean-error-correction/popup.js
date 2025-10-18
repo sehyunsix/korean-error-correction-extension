@@ -332,6 +332,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
         }
         
+        console.log(`📤 [팝업] API 요청 URL: ${apiUrl}?key=***`);
+        
         const response = await fetch(`${apiUrl}?key=${geminiApiKey}`, {
           method: 'POST',
           headers: {
@@ -340,18 +342,24 @@ document.addEventListener('DOMContentLoaded', async () => {
           body: JSON.stringify({
             contents: [{
               parts: [{
-                text: `당신은 한국어 맞춤법 전문가입니다. 다음 텍스트의 맞춤법 오류를 찾아주세요.
+                text: `당신은 한국어 맞춤법 전문가입니다. 다음 텍스트에서 **틀린 부분만** 정확하게 찾아주세요.
 
 텍스트: "${text}"
+
+**중요 규칙**:
+1. 실제로 맞춤법이 **틀린 단어만** 찾아주세요
+2. 이미 올바른 단어는 절대 포함하지 마세요
+3. token(오류 단어)과 suggestions(교정 단어)가 같으면 안 됩니다
+4. 띄어쓰기, 문법, 맞춤법 오류만 찾아주세요
 
 다음 JSON 형식으로 응답해주세요:
 {
   "errors": [
     {
-      "token": "오류가 있는 단어",
-      "suggestions": ["교정된 단어"],
+      "token": "틀린 단어",
+      "suggestions": ["올바른 단어"],
       "type": "spell",
-      "info": "Gemini 교정"
+      "info": "오류 설명"
     }
   ],
   "corrected_text": "전체 교정된 텍스트"
@@ -370,8 +378,60 @@ JSON만 출력하고 다른 설명은 하지 마세요.`
           })
         });
         
+        console.log(`📥 [팝업] API 응답 상태: ${response.status} ${response.statusText}`);
+        
+        if (!response.ok) {
+          // 오류 응답 본문 읽기
+          let errorBody = '';
+          try {
+            const errorData = await response.json();
+            errorBody = JSON.stringify(errorData, null, 2);
+            console.error('❌ [팝업] API 오류 응답:', errorData);
+          } catch (e) {
+            errorBody = await response.text();
+            console.error('❌ [팝업] API 오류 응답 (텍스트):', errorBody);
+          }
+          
+          console.error('');
+          console.error('='.repeat(80));
+          console.error('❌❌❌ [팝업] Gemini API 오류 상세 정보 ❌❌❌');
+          console.error('='.repeat(80));
+          console.error(`🔗 요청 URL: ${apiUrl}`);
+          console.error(`📊 상태 코드: ${response.status} (${response.statusText})`);
+          console.error(`📝 모델: ${modelResult.geminiModel || 'gemini-1.5-flash-8b-latest (기본)'}`);
+          console.error(`📄 오류 내용:\n${errorBody}`);
+          console.error('='.repeat(80));
+          console.error('');
+          
+          let helpMessage = `Gemini API 오류: ${response.status} (${response.statusText})\n\n`;
+          if (response.status === 404) {
+            helpMessage += '💡 모델을 찾을 수 없습니다.\n';
+            helpMessage += '   - 팝업에서 "🔄" 버튼을 눌러 사용 가능한 모델 목록을 다시 불러오세요.\n';
+            helpMessage += '   - 다른 모델을 선택해보세요.';
+          } else if (response.status === 403) {
+            helpMessage += '💡 API Key 권한 오류\n';
+            helpMessage += '   - API Key가 유효한지 확인하세요.\n';
+            helpMessage += '   - https://aistudio.google.com/app/apikey 에서 확인하세요.';
+          } else if (response.status === 429) {
+            helpMessage += '💡 API 호출 한도 초과\n';
+            helpMessage += '   - 잠시 후 다시 시도하세요.';
+          }
+          
+          alert(helpMessage);
+          throw new Error(`Gemini API 오류: ${response.status}`);
+        }
+        
         const geminiData = await response.json();
+        
+        // 응답 구조 확인
+        if (!geminiData.candidates || !geminiData.candidates[0] || !geminiData.candidates[0].content) {
+          console.error('❌ [팝업] 예상치 못한 API 응답 구조:', JSON.stringify(geminiData, null, 2));
+          alert('Gemini API 응답 구조가 올바르지 않습니다.\n콘솔을 확인하세요.');
+          throw new Error('Gemini API 응답 구조 오류');
+        }
+        
         const textContent = geminiData.candidates[0].content.parts[0].text;
+        console.log('✅ [팝업] Gemini 응답:', textContent.substring(0, 200) + (textContent.length > 200 ? '...' : ''));
         
         // JSON 추출
         let jsonText = textContent;
@@ -382,6 +442,29 @@ JSON만 출력하고 다른 설명은 하지 마세요.`
         }
         
         data = JSON.parse(jsonText);
+        console.log('✅ [팝업] 파싱된 결과:', data);
+        
+        // suggestion과 token이 같은 경우 필터링
+        if (data.errors && Array.isArray(data.errors)) {
+          const originalCount = data.errors.length;
+          data.errors = data.errors.filter(error => {
+            const token = error.token?.trim();
+            const suggestion = error.suggestions?.[0]?.trim();
+            
+            if (!token || !suggestion) {
+              console.warn('⚠️ [팝업] 유효하지 않은 오류 항목 제거:', error);
+              return false;
+            }
+            
+            if (token === suggestion) {
+              console.log(`🔄 [팝업] token과 suggestion이 동일하여 제거: "${token}"`);
+              return false;
+            }
+            
+            return true;
+          });
+          console.log(`✅ [팝업] 필터링 완료: ${originalCount}개 → ${data.errors.length}개`);
+        }
       } else {
         // ET5 API 사용
         const response = await fetch('http://localhost:3000/api/check', {

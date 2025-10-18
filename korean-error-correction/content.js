@@ -111,18 +111,24 @@ async function checkSpellingWithGemini(text, apiKey) {
       console.log(`🎯 기본 모델 사용`);
     }
     
-    const prompt = `당신은 한국어 맞춤법 전문가입니다. 다음 텍스트의 맞춤법 오류를 찾아주세요.
+    const prompt = `당신은 한국어 맞춤법 전문가입니다. 다음 텍스트에서 **틀린 부분만** 정확하게 찾아주세요.
 
 텍스트: "${text}"
+
+**중요 규칙**:
+1. 실제로 맞춤법이 **틀린 단어만** 찾아주세요
+2. 이미 올바른 단어는 절대 포함하지 마세요
+3. token(오류 단어)과 suggestions(교정 단어)가 같으면 안 됩니다
+4. 띄어쓰기, 문법, 맞춤법 오류만 찾아주세요
 
 다음 JSON 형식으로 응답해주세요:
 {
   "errors": [
     {
-      "token": "오류가 있는 단어",
-      "suggestions": ["교정된 단어"],
+      "token": "틀린 단어",
+      "suggestions": ["올바른 단어"],
       "type": "spell",
-      "info": "Gemini 교정"
+      "info": "오류 설명"
     }
   ],
   "corrected_text": "전체 교정된 텍스트"
@@ -131,6 +137,8 @@ async function checkSpellingWithGemini(text, apiKey) {
 오류가 없으면 errors는 빈 배열 []로, corrected_text는 원본 텍스트 그대로 반환하세요.
 JSON만 출력하고 다른 설명은 하지 마세요.`;
 
+    console.log(`📤 API 요청 URL: ${apiUrl}?key=***`);
+    
     const response = await fetch(`${apiUrl}?key=${apiKey}`, {
       method: 'POST',
       headers: {
@@ -151,13 +159,60 @@ JSON만 출력하고 다른 설명은 하지 마세요.`;
       })
     });
     
+    console.log(`📥 API 응답 상태: ${response.status} ${response.statusText}`);
+
     if (!response.ok) {
-      throw new Error(`Gemini API 오류: ${response.status}`);
+      // 오류 응답 본문 읽기
+      let errorBody = '';
+      try {
+        const errorData = await response.json();
+        errorBody = JSON.stringify(errorData, null, 2);
+        console.error('❌ API 오류 응답:', errorData);
+      } catch (e) {
+        errorBody = await response.text();
+        console.error('❌ API 오류 응답 (텍스트):', errorBody);
+      }
+      
+      console.error('');
+      console.error('='.repeat(80));
+      console.error('❌❌❌ Gemini API 오류 상세 정보 ❌❌❌');
+      console.error('='.repeat(80));
+      console.error(`🔗 요청 URL: ${apiUrl}`);
+      console.error(`📊 상태 코드: ${response.status} (${response.statusText})`);
+      console.error(`📝 모델: ${modelData.geminiModel || 'gemini-flash-lite-latest (기본)'}`);
+      console.error(`📄 오류 내용:\n${errorBody}`);
+      console.error('='.repeat(80));
+      console.error('');
+      
+      if (response.status === 404) {
+        console.error('💡 해결 방법:');
+        console.error('   1. 모델 이름이 올바른지 확인하세요');
+        console.error('   2. 팝업에서 "🔄" 버튼을 눌러 사용 가능한 모델 목록을 다시 불러오세요');
+        console.error('   3. API Key가 해당 모델에 대한 권한이 있는지 확인하세요');
+      } else if (response.status === 403) {
+        console.error('💡 해결 방법:');
+        console.error('   1. API Key가 유효한지 확인하세요');
+        console.error('   2. API Key에 Gemini API 사용 권한이 있는지 확인하세요');
+        console.error('   3. https://aistudio.google.com/app/apikey 에서 확인하세요');
+      } else if (response.status === 429) {
+        console.error('💡 해결 방법:');
+        console.error('   1. API 호출 한도를 초과했습니다');
+        console.error('   2. 잠시 후 다시 시도하세요');
+      }
+      
+      throw new Error(`Gemini API 오류: ${response.status} (${response.statusText})`);
+    }
+
+    const data = await response.json();
+    
+    // 응답 구조 확인
+    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+      console.error('❌ 예상치 못한 API 응답 구조:', JSON.stringify(data, null, 2));
+      throw new Error('Gemini API 응답 구조가 올바르지 않습니다');
     }
     
-    const data = await response.json();
     const textContent = data.candidates[0].content.parts[0].text;
-    console.log('Gemini 응답:', textContent);
+    console.log('✅ Gemini 응답:', textContent.substring(0, 200) + (textContent.length > 200 ? '...' : ''));
     
     // JSON 추출 (마크다운 코드 블록 제거)
     let jsonText = textContent;
@@ -168,12 +223,37 @@ JSON만 출력하고 다른 설명은 하지 마세요.`;
     }
     
     const result = JSON.parse(jsonText);
-    console.log('파싱된 결과:', result);
+    console.log('✅ 파싱된 결과:', result);
+    
+    // suggestion과 token이 같은 경우 필터링
+    const validErrors = (result.errors || []).filter(error => {
+      const token = error.token?.trim();
+      const suggestion = error.suggestions?.[0]?.trim();
+      
+      if (!token || !suggestion) {
+        console.warn('⚠️ 유효하지 않은 오류 항목 제거:', error);
+        return false;
+      }
+      
+      if (token === suggestion) {
+        console.log(`🔄 token과 suggestion이 동일하여 제거: "${token}"`);
+        return false;
+      }
+      
+      return true;
+    });
+    
+    console.log(`✅ 필터링 완료: ${result.errors?.length || 0}개 → ${validErrors.length}개`);
     console.log('=== Gemini API 맞춤법 검사 완료 ===\n');
     
-    return result.errors || [];
+    return validErrors;
   } catch (error) {
-    console.error('❌ Gemini API 맞춤법 검사 오류:', error);
+    console.error('');
+    console.error('❌❌❌ Gemini API 맞춤법 검사 실패 ❌❌❌');
+    console.error('오류 타입:', error.name);
+    console.error('오류 메시지:', error.message);
+    console.error('스택 트레이스:', error.stack);
+    console.error('');
     return null;
   }
 }
@@ -312,9 +392,9 @@ async function highlightErrorsWithAPI(node) {
       const range = selection.getRangeAt(0);
       highlightSelectedRange(range, [], selectedText, false);
       
-      return 0;
-    }
-    
+    return 0;
+  }
+  
   } catch (error) {
     lastCheckStats.apiFailed++;
     console.error('❌ API 오류:', error.message);
@@ -389,7 +469,7 @@ function highlightSelectedRange(range, errors, correctedText, hasErrors = true) 
       });
       
       if (hasError && textNode.parentNode) {
-        const parent = textNode.parentNode;
+      const parent = textNode.parentNode;
         const parts = [];
         let lastIndex = 0;
         
@@ -651,28 +731,28 @@ function highlightSingleNodeRuleBased(textNode) {
             document.createTextNode(text.substring(error.index + error.text.length, lastIndex)),
             fragment.firstChild
           );
-        }
-        
-        // 하이라이트된 오타
-        const span = document.createElement('span');
-        span.className = 'korean-spell-error';
+            }
+            
+            // 하이라이트된 오타
+            const span = document.createElement('span');
+            span.className = 'korean-spell-error';
         span.textContent = error.text;
         span.title = `맞춤법 오류: ${error.description}`;
-        span.style.cssText = 'background-color: #ffcccc !important; border-bottom: 2px solid #ff0000 !important; cursor: help !important; padding: 0 2px !important; border-radius: 2px !important;';
+            span.style.cssText = 'background-color: #ffcccc !important; border-bottom: 2px solid #ff0000 !important; cursor: help !important; padding: 0 2px !important; border-radius: 2px !important;';
         span.setAttribute('data-correct', error.correct);
-        
-        // 클릭하면 수정
-        span.addEventListener('click', function(e) {
-          e.stopPropagation();
+            
+            // 클릭하면 수정
+            span.addEventListener('click', function(e) {
+              e.stopPropagation();
           if (confirm(`"${error.text}"을(를) "${error.correct}"(으)로 수정하시겠습니까?`)) {
             this.textContent = error.correct;
-            this.style.cssText = 'background-color: #ccffcc !important; border-bottom: 2px solid #00aa00 !important; cursor: default !important; padding: 0 2px !important; border-radius: 2px !important;';
-            this.title = '수정됨';
-          }
-        });
-        
+                this.style.cssText = 'background-color: #ccffcc !important; border-bottom: 2px solid #00aa00 !important; cursor: default !important; padding: 0 2px !important; border-radius: 2px !important;';
+                this.title = '수정됨';
+              }
+            });
+            
         fragment.insertBefore(span, fragment.firstChild);
-        highlightedElements.push(span);
+            highlightedElements.push(span);
         
         lastIndex = error.index;
       });

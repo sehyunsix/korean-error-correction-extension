@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "한글 맞춤법 검사기",
-  "version": "3.9.3",
-  "version_name": "3.9.3 - 변수 충돌 수정 및 pre-commit hook 추가",
+  "version": "3.9.5",
+  "version_name": "3.9.5 - 틀린 부분만 검출 및 필터링 추가",
   "description": "텍스트를 선택하면 ET5 AI 모델로 교정해주는 맞춤법 검사기",
   "permissions": [
     "activeTab",
