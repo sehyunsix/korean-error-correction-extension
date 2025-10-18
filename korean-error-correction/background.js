@@ -8,6 +8,45 @@ chrome.runtime.onInstalled.addListener(() => {
   console.log('🔍 단축키를 누르면 이 콘솔에 로그가 출력됩니다!');
   console.log('='.repeat(80));
   console.log('');
+  
+  // 우클릭 메뉴 추가
+  chrome.contextMenus.create({
+    id: 'check-korean-spelling',
+    title: '🔍 선택한 텍스트 맞춤법 검사',
+    contexts: ['selection']
+  });
+  console.log('✅ 우클릭 메뉴 추가됨: "선택한 텍스트 맞춤법 검사"');
+});
+
+// 우클릭 메뉴 클릭 처리
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  if (info.menuItemId === 'check-korean-spelling') {
+    console.log('');
+    console.log('='.repeat(80));
+    console.log('🖱️ [BACKGROUND] 우클릭 메뉴에서 맞춤법 검사 실행!');
+    console.log('📌 선택된 텍스트:', info.selectionText?.substring(0, 50) + '...');
+    console.log('⏰ 시간:', new Date().toLocaleTimeString());
+    console.log('='.repeat(80));
+    
+    // Content script에 메시지 전송
+    try {
+      const response = await chrome.tabs.sendMessage(tab.id, { action: 'checkSpelling' });
+      console.log('✅ 메시지 전송 성공!');
+      console.log('📥 응답:', response);
+    } catch (error) {
+      console.error('❌ 메시지 전송 실패:', error.message);
+      
+      // 재시도
+      try {
+        console.log('🔄 0.5초 후 재시도...');
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const retryResponse = await chrome.tabs.sendMessage(tab.id, { action: 'checkSpelling' });
+        console.log('✅ 재시도 성공!');
+      } catch (retryError) {
+        console.error('❌ 재시도 실패:', retryError.message);
+      }
+    }
+  }
 });
 
 // Content script에서 온 메시지 처리 (Gemini API 호출)

@@ -1,12 +1,13 @@
 {
   "manifest_version": 3,
   "name": "한글 맞춤법 검사기",
-  "version": "4.3.2",
-  "version_name": "4.3.2 - Content Script 로딩 재시도 메커니즘 추가",
+  "version": "4.3.3",
+  "version_name": "4.3.3 - 우클릭 메뉴 추가 (단축키 대체 방법)",
   "description": "선택한 텍스트를 Gemini AI로 검사하고 자동 교정하는 맞춤법 검사기 (Cmd+Shift+E)",
   "permissions": [
     "activeTab",
-    "storage"
+    "storage",
+    "contextMenus"
   ],
   "commands": {
     "check-selection": {
