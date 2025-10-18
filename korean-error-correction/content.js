@@ -32,7 +32,7 @@ async function checkSpellingWithAPI(text) {
 }
 
 /**
- * 선택된 텍스트 가져오기 (input/textarea/contenteditable 지원)
+ * 선택된 텍스트 가져오기 (input/textarea/contenteditable/iframe 지원)
  */
 function getSelectedText() {
   console.log('🔎 getSelectedText 함수 실행');
@@ -42,7 +42,71 @@ function getSelectedText() {
   console.log('🎯 activeElement:', activeElement);
   console.log('🎯 activeElement.tagName:', activeElement?.tagName);
   
-  // 2. Input/Textarea 필드인 경우
+  // 2. iframe 내부 선택 확인 (TinyMCE, CKEditor 등)
+  if (activeElement && activeElement.tagName === 'IFRAME') {
+    console.log('🖼️ iframe 감지! iframe 내부 확인...');
+    try {
+      const iframeDoc = activeElement.contentDocument || activeElement.contentWindow?.document;
+      const iframeWindow = activeElement.contentWindow;
+      
+      if (iframeWindow && iframeDoc) {
+        console.log('🖼️ iframe 접근 성공');
+        const iframeSelection = iframeWindow.getSelection();
+        console.log('🖼️ iframe selection:', iframeSelection?.toString());
+        
+        if (iframeSelection && iframeSelection.toString().trim()) {
+          const selectedText = iframeSelection.toString().trim();
+          console.log('🖼️ iframe에서 선택:', selectedText.substring(0, 100));
+          return {
+            text: selectedText,
+            element: activeElement,
+            type: 'iframe',
+            selection: iframeSelection,
+            iframeWindow: iframeWindow
+          };
+        }
+      }
+    } catch (error) {
+      console.warn('⚠️ iframe 접근 오류 (CORS일 수 있음):', error);
+    }
+  }
+  
+  // 3. 모든 iframe 검사 (activeElement가 iframe이 아닐 때도)
+  console.log('🔍 모든 iframe 검사...');
+  const iframes = document.querySelectorAll('iframe');
+  console.log(`🖼️ 발견된 iframe: ${iframes.length}개`);
+  
+  for (let i = 0; i < iframes.length; i++) {
+    const iframe = iframes[i];
+    console.log(`🖼️ iframe[${i}] 확인:`, iframe.id || iframe.name || '(no id)');
+    
+    try {
+      const iframeWindow = iframe.contentWindow;
+      const iframeDoc = iframe.contentDocument || iframeWindow?.document;
+      
+      if (iframeWindow && iframeDoc) {
+        const iframeSelection = iframeWindow.getSelection();
+        const selectionText = iframeSelection?.toString().trim();
+        
+        console.log(`🖼️ iframe[${i}] selection:`, selectionText?.substring(0, 50) || '(없음)');
+        
+        if (selectionText) {
+          console.log(`✅ iframe[${i}]에서 선택 발견!`);
+          return {
+            text: selectionText,
+            element: iframe,
+            type: 'iframe',
+            selection: iframeSelection,
+            iframeWindow: iframeWindow
+          };
+        }
+      }
+    } catch (error) {
+      console.warn(`⚠️ iframe[${i}] 접근 오류:`, error.message);
+    }
+  }
+  
+  // 4. Input/Textarea 필드인 경우
   if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
     console.log('📝 Input/Textarea 감지!');
     const start = activeElement.selectionStart;
@@ -64,7 +128,7 @@ function getSelectedText() {
     }
   }
   
-  // 3. ContentEditable 요소인 경우
+  // 5. ContentEditable 요소인 경우
   console.log('✏️ ContentEditable 확인:', activeElement?.isContentEditable);
   if (activeElement && activeElement.isContentEditable) {
     console.log('✏️ ContentEditable 감지!');
@@ -81,7 +145,7 @@ function getSelectedText() {
     }
   }
   
-  // 4. 일반 텍스트 선택
+  // 6. 일반 텍스트 선택
   console.log('📄 일반 텍스트 선택 확인...');
   const selection = window.getSelection();
   console.log('📄 window.getSelection():', selection);
@@ -156,16 +220,16 @@ async function highlightErrors(bodyElement) {
     
     const errors = Array.isArray(result) ? result : (result.errors || []);
 
-    // Input/Textarea 필드인 경우
-    if (selectionInfo.type === 'input') {
+    // Input/Textarea 또는 iframe 필드인 경우 (하이라이트 불가)
+    if (selectionInfo.type === 'input' || selectionInfo.type === 'iframe') {
       if (errors.length === 0) {
         alert('✅ 오류가 없습니다!');
-        console.log('✅ Input 필드 - 오류 없음');
+        console.log(`✅ ${selectionInfo.type} 필드 - 오류 없음`);
         STATE.lastCheckStats.foundErrors = 0;
   return 0;
 }
 
-      // Input 필드는 교정된 텍스트를 표시
+      // Input/iframe 필드는 교정된 텍스트를 표시
       const correctedText = errors.length > 0 
         ? errors.reduce((text, error) => text.replace(error.token, error.suggestions[0]), selectedText)
         : selectedText;
@@ -173,7 +237,7 @@ async function highlightErrors(bodyElement) {
       const errorList = errors.map(e => `• ${e.token} → ${e.suggestions[0]}`).join('\n');
       alert(`🔴 ${errors.length}개의 오류 발견:\n\n${errorList}\n\n교정된 텍스트:\n${correctedText}\n\n💡 교정된 텍스트를 복사하여 사용하세요.`);
       
-      console.log(`🔴 Input 필드 - ${errors.length}개의 오류 발견`);
+      console.log(`🔴 ${selectionInfo.type} 필드 - ${errors.length}개의 오류 발견`);
       STATE.lastCheckStats.foundErrors = errors.length;
       return errors.length;
     }
