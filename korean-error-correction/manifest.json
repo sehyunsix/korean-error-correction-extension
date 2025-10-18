@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "한글 맞춤법 검사기",
-  "version": "4.1.0",
-  "version_name": "4.1.0 - 수정하기 버튼으로 직접 텍스트 대체",
+  "version": "4.1.2",
+  "version_name": "4.1.2 - 기술 용어 오류 제외 처리",
   "description": "텍스트를 선택하면 ET5 AI 모델로 교정해주는 맞춤법 검사기",
   "permissions": [
     "activeTab",

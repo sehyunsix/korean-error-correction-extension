@@ -50,21 +50,28 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   `;
 
-  // 오류 목록 HTML 생성
-  let errorListHTML = '';
+  // 수정 전 텍스트에 오류 하이라이트 적용
+  let highlightedOriginalText = originalText;
   if (errors.length > 0) {
-    errorListHTML = `
-      <div style="margin: 16px 0; padding: 12px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
-        <div style="font-weight: 600; margin-bottom: 8px; color: #856404;">발견된 오류:</div>
-        ${errors.map(e => `
-          <div style="margin: 4px 0; padding: 4px 0; color: #856404;">
-            <span style="background: #ffebee; padding: 2px 6px; border-radius: 4px; text-decoration: line-through;">${e.token}</span>
-            <span style="margin: 0 8px;">→</span>
-            <span style="background: #e8f5e9; padding: 2px 6px; border-radius: 4px; font-weight: 600;">${e.suggestions[0]}</span>
-          </div>
-        `).join('')}
-      </div>
-    `;
+    // 오류를 위치 순서대로 정렬 (뒤에서부터 처리하기 위해)
+    const sortedErrors = [...errors].sort((a, b) => {
+      const indexA = originalText.indexOf(a.token);
+      const indexB = originalText.indexOf(b.token);
+      return indexB - indexA; // 역순 정렬
+    });
+
+    // 뒤에서부터 대체하여 인덱스가 틀어지지 않도록 함
+    for (const error of sortedErrors) {
+      const tokenIndex = highlightedOriginalText.lastIndexOf(error.token);
+      if (tokenIndex !== -1) {
+        const before = highlightedOriginalText.substring(0, tokenIndex);
+        const after = highlightedOriginalText.substring(tokenIndex + error.token.length);
+        highlightedOriginalText = before + 
+          `<span style="background: #ffebee; padding: 2px 4px; border-radius: 3px; text-decoration: line-through; color: #d32f2f; font-weight: 600;">${error.token}</span>` +
+          `<span style="color: #2196f3; font-weight: 600;">→${error.suggestions[0]}</span>` +
+          after;
+      }
+    }
   }
 
   // 텍스트 비교 HTML
@@ -72,7 +79,7 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
     <div style="margin: 16px 0;">
       <div style="margin-bottom: 12px;">
         <div style="font-weight: 600; color: #d32f2f; margin-bottom: 6px;">❌ 수정 전:</div>
-        <div style="padding: 12px; background: #ffebee; border-radius: 8px; line-height: 1.6; white-space: pre-wrap; word-break: break-word;">${originalText}</div>
+        <div style="padding: 12px; background: #ffebee; border-radius: 8px; line-height: 1.8; white-space: pre-wrap; word-break: break-word;">${highlightedOriginalText}</div>
       </div>
       <div>
         <div style="font-weight: 600; color: #388e3c; margin-bottom: 6px;">✅ 수정 후:</div>
@@ -167,7 +174,6 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
     <div style="font-size: 20px; font-weight: bold; margin-bottom: 16px; color: #333;">
       ${title}
     </div>
-    ${errorListHTML}
     ${comparisonHTML}
     ${buttonsHTML}
     <div id="action-status" style="
