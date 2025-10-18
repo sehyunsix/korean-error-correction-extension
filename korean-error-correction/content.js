@@ -754,8 +754,7 @@ async function highlightErrorsWithSavedSelection(bodyElement, savedSelectionInfo
     console.log('activeElement:', document.activeElement);
     console.log('activeElement.tagName:', document.activeElement?.tagName);
     console.log('window.getSelection():', window.getSelection()?.toString());
-    
-    alert('텍스트를 선택해주세요.\n\n💡 Tip:\n- 마우스로 텍스트를 드래그하세요\n- Input 필드에서는 텍스트를 선택한 후 단축키를 누르세요');
+    console.log('텍스트를 선택해주세요.\n\n💡 Tip:\n- 마우스로 텍스트를 드래그하세요\n- Input 필드에서는 텍스트를 선택한 후 단축키를 누르세요');
     return 0;
   }
 
@@ -953,24 +952,28 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 async function handleShortcut(e) {
   // Cmd+Shift+E (Mac) 또는 Ctrl+Shift+E (Windows/Linux)
   const isEKey = e.key === 'E' || e.key === 'e' || e.code === 'KeyE';
-  const isModifiers = (e.metaKey || e.ctrlKey) && e.shiftKey && !e.altKey;
+  const windowSelection = window.getSelection();
 
-  onsole.log('');
-  console.log('⌨️⌨️⌨️ 단축키 감지! Cmd+Shift+E ⌨️⌨️⌨️');
-  console.log('💾 즉시 저장한 selection:', savedText?.substring(0, 50) || '(없음)');
-  console.log('💾 savedText 길이:', savedText?.length || 0);
-  console.log('💾 activeElement:', activeElement?.tagName);
+
   
-  if (isEKey && isModifiers) {
+  if ((e.metaKey || e.ctrlKey) && isEKey && windowSelection && windowSelection.rangeCount > 0) {
     // 🔥🔥🔥 최우선: 즉시 selection 저장 (로그보다 먼저!)
+    console.log('⌨️⌨️⌨️ 단축키 감지! Cmd+Shift+E ⌨️⌨️⌨️');
     // 이벤트 차단보다도 먼저 selection을 캡처해야 함
-    const windowSelection = window.getSelection();
     const activeElement = document.activeElement;
-    
-    // Selection을 즉시 복사 (얕은 복사가 아닌 깊은 저장)
+
     let savedSelection = null;
     let savedText = null;
     let savedRange = null;
+
+    console.log('');
+    console.log('⌨️⌨️⌨️ 단축키 감지! Cmd+E ⌨️⌨️⌨️');
+    console.log('💾 즉시 저장한 selection:', windowSelection?.toString()?.substring(0, 50) || '(없음)');
+    console.log('💾 savedText 길이:', savedText?.length || 0);
+    console.log('💾 activeElement:', activeElement?.tagName);
+    console.log('💾 rangeCount:', windowSelection?.rangeCount || 0);
+    // Selection을 즉시 복사 (얕은 복사가 아닌 깊은 저장)
+
     
     if (windowSelection && windowSelection.rangeCount > 0) {
       savedSelection = windowSelection;
@@ -1048,7 +1051,7 @@ if (document.readyState === 'loading') {
 // 확장 프로그램 로드 확인
 console.log('');
 console.log('🎉 한글 맞춤법 검사기 Content Script 로드 완료!');
-console.log('⌨️  단축키 Cmd+Shift+E (Mac) / Ctrl+Shift+E (Windows)');
+console.log('⌨️  단축키 Cmd+E (Mac) / Ctrl+E (Windows) - 간편해졌습니다!');
 console.log('🖱️  또는 텍스트 선택 후 우클릭 → 맞춤법 검사');
 console.log('✅ Window + Document + Body 3중 리스너 등록');
 console.log('📍 Run at: document_start');

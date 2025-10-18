@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "한글 맞춤법 검사기",
-  "version": "4.5.1",
-  "version_name": "4.5.1 - Cmd+Shift+E 복구 + passive:false로 이벤트 강제 캡처",
-  "description": "선택한 텍스트를 Gemini AI로 검사하고 자동 교정하는 맞춤법 검사기 (Cmd+Shift+E)",
+  "version": "4.5.2",
+  "version_name": "4.5.2 - 단축키 간소화: Cmd+E (Shift 불필요)",
+  "description": "선택한 텍스트를 Gemini AI로 검사하고 자동 교정하는 맞춤법 검사기 (Cmd+E)",
   "permissions": [
     "activeTab",
     "storage",
@@ -12,8 +12,8 @@
   "commands": {
     "check-selection": {
       "suggested_key": {
-        "default": "Ctrl+Shift+E",
-        "mac": "Command+Shift+E"
+        "default": "Ctrl+E",
+        "mac": "Command+E"
       },
       "description": "선택한 텍스트 맞춤법 검사"
     }
