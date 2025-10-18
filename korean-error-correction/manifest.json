@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "한글 맞춤법 검사기",
-  "version": "4.4.5",
-  "version_name": "4.4.5 - 단축키 디버그 로그 추가",
+  "version": "4.4.6",
+  "version_name": "4.4.6 - 단축키 조건 체크 상세 디버그",
   "description": "선택한 텍스트를 Gemini AI로 검사하고 자동 교정하는 맞춤법 검사기 (Cmd+Shift+E)",
   "permissions": [
     "activeTab",

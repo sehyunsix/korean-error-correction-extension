@@ -961,6 +961,19 @@ async function handleShortcut(e) {
     console.log('📌 ctrlKey:', e.ctrlKey);
     console.log('📌 shiftKey:', e.shiftKey);
     console.log('📌 altKey:', e.altKey);
+    
+    // 조건 체크
+    const isEKey = e.key === 'E' || e.key === 'e' || e.code === 'KeyE';
+    const isModifiers = (e.metaKey || e.ctrlKey) && e.shiftKey && !e.altKey;
+    
+    console.log('');
+    console.log('🔍 조건 체크:');
+    console.log('  isEKey:', isEKey);
+    console.log('  isModifiers:', isModifiers);
+    console.log('  (metaKey || ctrlKey):', (e.metaKey || e.ctrlKey));
+    console.log('  shiftKey:', e.shiftKey);
+    console.log('  !altKey:', !e.altKey);
+    console.log('  최종 결과 (isEKey && isModifiers):', isEKey && isModifiers);
     console.log('');
   }
   
@@ -980,6 +993,7 @@ async function handleShortcut(e) {
     let savedRange = null;
     
     if (windowSelection && windowSelection.rangeCount > 0) {
+      savedSelection = windowSelection;
       const textContent = windowSelection.toString();
       // 빈 문자열이 아닐 때만 저장
       if (textContent && textContent.trim()) {
