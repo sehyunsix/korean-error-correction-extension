@@ -951,6 +951,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // 키보드 단축키 감지 함수
 async function handleShortcut(e) {
+  // 🔍 모든 키 입력 디버그 (E 키만)
+  if (e.key === 'E' || e.key === 'e' || e.code === 'KeyE') {
+    console.log('');
+    console.log('🔑 E 키 감지!!!');
+    console.log('📌 key:', e.key);
+    console.log('📌 code:', e.code);
+    console.log('📌 metaKey (Cmd):', e.metaKey);
+    console.log('📌 ctrlKey:', e.ctrlKey);
+    console.log('📌 shiftKey:', e.shiftKey);
+    console.log('📌 altKey:', e.altKey);
+    console.log('');
+  }
+  
   // Cmd+Shift+E (Mac) 또는 Ctrl+Shift+E (Windows/Linux)
   const isEKey = e.key === 'E' || e.key === 'e' || e.code === 'KeyE';
   const isModifiers = (e.metaKey || e.ctrlKey) && e.shiftKey && !e.altKey;
