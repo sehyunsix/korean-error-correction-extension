@@ -951,12 +951,22 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 // 키보드 단축키 감지 함수
 async function handleShortcut(e) {
   // Cmd+E (Mac) 또는 Ctrl+E (Windows/Linux) - Shift 불필요!
-  const isEKey = e.key === 'E' || e.key === 'e' || e.code === 'KeyE';
-  const windowSelection = window.getSelection();
+  const isEKey = e.key === 'E' || e.key === 'e' || e.key === 'ㄸ' || e.key === 'ㄷ' ;
 
+  if(e.metaKey || e.ctrlKey) {
+    console.log('Cmd+E 또는 Ctrl+E 단축키 감지!', e.metaKey, e.ctrlKey);
+  }
+
+  if(isEKey) {
+    console.log('E 키 감지!', e.key);
+  }
+
+  if(e.shiftKey) {
+    console.log('Shift 키 감지!', e.shiftKey);
+  }
 
   
-  if ((e.metaKey || e.ctrlKey) && isEKey && windowSelection && windowSelection.rangeCount > 0) {
+  if ((e.metaKey || e.ctrlKey||e.shiftKey) && isEKey ) {
     // 🔥🔥🔥 최우선: 즉시 selection 저장 (로그보다 먼저!)
     console.log('⌨️⌨️⌨️ 단축키 감지! Cmd+E ⌨️⌨️⌨️');
     // 이벤트 차단보다도 먼저 selection을 캡처해야 함
@@ -965,6 +975,7 @@ async function handleShortcut(e) {
     let savedSelection = null;
     let savedText = null;
     let savedRange = null;
+    const windowSelection = window.getSelection();
 
     console.log('');
     console.log('⌨️⌨️⌨️ 단축키 감지! Cmd+E ⌨️⌨️⌨️');
@@ -974,7 +985,6 @@ async function handleShortcut(e) {
     console.log('💾 rangeCount:', windowSelection?.rangeCount || 0);
     // Selection을 즉시 복사 (얕은 복사가 아닌 깊은 저장)
 
-    
     if (windowSelection && windowSelection.rangeCount > 0) {
       savedSelection = windowSelection;
       const textContent = windowSelection.toString();
@@ -995,7 +1005,6 @@ async function handleShortcut(e) {
     e.stopImmediatePropagation();
     
     console.log('');
-    console.log('⌨️⌨️⌨️ 단축키 감지! Cmd+Shift+E ⌨️⌨️⌨️');
     console.log('💾 즉시 저장한 selection:', savedText?.substring(0, 50) || '(없음)');
     console.log('💾 savedText 길이:', savedText?.length || 0);
     console.log('💾 activeElement:', activeElement?.tagName);
