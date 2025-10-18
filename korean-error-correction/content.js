@@ -675,6 +675,74 @@ function getSelectedText() {
 }
 
 /**
+ * 미리 저장된 selection 정보를 활용한 getSelectedText (타이밍 문제 해결)
+ */
+function getSelectedTextWithPreserved(savedText, savedRange, activeElement) {
+  console.log('🔎 getSelectedTextWithPreserved 실행');
+  console.log('💾 savedText:', savedText?.substring(0, 50));
+  console.log('💾 savedRange:', savedRange);
+  console.log('💾 activeElement:', activeElement?.tagName);
+  
+  // 1. 저장된 일반 텍스트 선택이 있는 경우 (최우선)
+  if (savedText && savedText.trim()) {
+    console.log('✅ 저장된 텍스트 사용!');
+    
+    // activeElement에 따라 타입 결정
+    if (activeElement) {
+      if (activeElement.tagName === 'IFRAME') {
+        console.log('📦 타입: iframe');
+        try {
+          const iframeWindow = activeElement.contentWindow;
+          const iframeSelection = iframeWindow?.getSelection();
+          return {
+            text: savedText.trim(),
+            element: activeElement,
+            type: 'iframe',
+            selection: iframeSelection,
+            iframeWindow: iframeWindow,
+            savedRange: savedRange
+          };
+        } catch (e) {
+          console.warn('⚠️ iframe 접근 실패, 일반 텍스트로 처리');
+        }
+      } else if (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA') {
+        console.log('📦 타입: input');
+        return {
+          text: savedText.trim(),
+          element: activeElement,
+          type: 'input',
+          start: activeElement.selectionStart,
+          end: activeElement.selectionEnd
+        };
+      } else if (activeElement.isContentEditable) {
+        console.log('📦 타입: contenteditable');
+        return {
+          text: savedText.trim(),
+          element: activeElement,
+          type: 'contenteditable',
+          selection: window.getSelection(),
+          savedRange: savedRange
+        };
+      }
+    }
+    
+    // 기본: 일반 텍스트 선택
+    console.log('📦 타입: normal');
+    return {
+      text: savedText.trim(),
+      element: null,
+      type: 'normal',
+      selection: window.getSelection(),
+      savedRange: savedRange
+    };
+  }
+  
+  // 2. 저장된 텍스트가 없으면 기존 getSelectedText() 호출
+  console.log('⚠️ 저장된 텍스트 없음, 기존 방식으로 시도...');
+  return getSelectedText();
+}
+
+/**
  * 선택된 텍스트에 API 기반 하이라이트 적용 (저장된 선택 정보 사용)
  */
 async function highlightErrorsWithSavedSelection(bodyElement, savedSelectionInfo) {
@@ -856,37 +924,44 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // 키보드 단축키 감지 함수
 async function handleShortcut(e) {
-  // 디버그 로그 (E 키만)
-  if (e.key === 'E' || e.key === 'e' || e.code === 'KeyE') {
-    console.log('🔑 E 키 감지:', {
-      key: e.key,
-      code: e.code,
-      metaKey: e.metaKey,
-      ctrlKey: e.ctrlKey,
-      shiftKey: e.shiftKey,
-      altKey: e.altKey,
-      timeStamp: e.timeStamp
-    });
-  }
-  
   // Cmd+Shift+E (Mac) 또는 Ctrl+Shift+E (Windows/Linux)
   const isEKey = e.key === 'E' || e.key === 'e' || e.code === 'KeyE';
   const isModifiers = (e.metaKey || e.ctrlKey) && e.shiftKey && !e.altKey;
   
   if (isEKey && isModifiers) {
-    console.log('🎯 Cmd+Shift+E 조합 감지!');
+    // 🔥🔥🔥 최우선: 즉시 selection 저장 (로그보다 먼저!)
+    // 이벤트 차단보다도 먼저 selection을 캡처해야 함
+    const windowSelection = window.getSelection();
+    const activeElement = document.activeElement;
     
-    // 🔥 즉시 선택 정보 저장 (포커스 변경 전에!)
-    const savedSelectionInfo = getSelectedText();
-    console.log('💾 선택 정보 저장:', savedSelectionInfo);
+    // Selection을 즉시 복사 (얕은 복사가 아닌 깊은 저장)
+    let savedSelection = null;
+    let savedText = null;
+    let savedRange = null;
     
-    // 이벤트 차단 (최우선)
+    if (windowSelection && windowSelection.rangeCount > 0) {
+      savedText = windowSelection.toString();
+      try {
+        savedRange = windowSelection.getRangeAt(0).cloneRange();
+      } catch (e) {
+        // Range 복사 실패 시 무시
+      }
+    }
+    
+    // 즉시 이벤트 차단 (selection 저장 후)
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
     
     console.log('');
     console.log('⌨️⌨️⌨️ 단축키 감지! Cmd+Shift+E ⌨️⌨️⌨️');
+    console.log('💾 즉시 저장한 selection:', savedText?.substring(0, 50));
+    console.log('💾 activeElement:', activeElement?.tagName);
+    
+    // 이제 getSelectedText() 호출 (저장된 정보 활용)
+    const savedSelectionInfo = getSelectedTextWithPreserved(savedText, savedRange, activeElement);
+    console.log('📦 최종 selectionInfo:', savedSelectionInfo);
+    
     console.log('🔍 맞춤법 검사 시작...');
     
     try {

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "한글 맞춤법 검사기",
-  "version": "4.3.8",
-  "version_name": "4.3.8 - 임베디드 페이지 선택 타이밍 문제 해결",
+  "version": "4.3.9",
+  "version_name": "4.3.9 - 모든 HTML 텍스트 선택 타이밍 완벽 해결",
   "description": "선택한 텍스트를 Gemini AI로 검사하고 자동 교정하는 맞춤법 검사기 (Cmd+Shift+E)",
   "permissions": [
     "activeTab",
