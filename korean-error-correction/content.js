@@ -15,6 +15,9 @@
  * 로딩 모달 표시
  */
 function showLoadingModal() {
+  // 검사 시작 시간 기록
+  STATE.checkStartTime = Date.now();
+  
   // 기존 로딩 모달 제거
   const existingModal = document.getElementById('spelling-loading-modal');
   if (existingModal) {
@@ -101,6 +104,9 @@ function hideLoadingModal() {
  * 교정 결과를 표시하는 모달 생성
  */
 function showCorrectionModal(title, originalText, correctedText, errors, selectionInfo = null) {
+  // 검사 소요 시간 계산
+  const elapsedTime = STATE.checkStartTime ? Date.now() - STATE.checkStartTime : 0;
+  const elapsedSeconds = (elapsedTime / 1000).toFixed(1);
   // iframe의 경우 Range를 미리 저장 (모달이 열리면 selection이 해제되므로)
   let savedRange = null;
   if (selectionInfo && selectionInfo.type === 'iframe' && selectionInfo.selection) {
@@ -223,7 +229,10 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
     <div style="background: linear-gradient(135deg, #15C39A 0%, #0FA784 100%); padding: 20px 24px; color: white; position: relative;">
       <div style="display: flex; align-items: center; justify-content: space-between;">
         <div>
-          <h2 style="margin: 0 0 4px 0; font-size: 19px; font-weight: 700; letter-spacing: -0.5px;">✨ 맞춤법 교정 완료</h2>
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+            <h2 style="margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -0.5px;">✨ 맞춤법 교정 완료</h2>
+            <span style="background: rgba(255,255,255,0.25); padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">${elapsedSeconds}초</span>
+          </div>
           <p style="margin: 0; font-size: 13px; opacity: 0.9;">검사가 완료되었습니다</p>
         </div>
         <button id="close-modal-header" style="
@@ -250,7 +259,10 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
         <div style="display: flex; align-items: center; gap: 12px;">
           <div style="width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px;">✓</div>
           <div>
-            <h2 style="margin: 0 0 2px 0; font-size: 19px; font-weight: 700; letter-spacing: -0.5px;">완벽합니다!</h2>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 2px;">
+              <h2 style="margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -0.5px;">완벽합니다!</h2>
+              <span style="background: rgba(255,255,255,0.25); padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">${elapsedSeconds}초</span>
+            </div>
             <p style="margin: 0; font-size: 13px; opacity: 0.9;">오류가 발견되지 않았습니다</p>
           </div>
         </div>
@@ -291,6 +303,7 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
           <div style="font-weight: 700; color: #15C39A; font-size: 15px; letter-spacing: -0.3px;">교정 결과</div>
           <div style="font-size: 11px; color: #15C39A; font-weight: 600; background: #d1fae5; padding: 2px 8px; border-radius: 12px;">${errors.length}개 수정</div>
+          <div style="font-size: 11px; color: #9ca3af; font-weight: 500;">${correctedText.length}자</div>
         </div>
         <div style="padding: 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; line-height: 1.8; white-space: pre-wrap; word-break: break-word; font-size: 14px; color: #1f2937; min-height: 120px;">${correctedText}</div>
       </div>
