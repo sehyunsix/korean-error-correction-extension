@@ -951,37 +951,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // 키보드 단축키 감지 함수
 async function handleShortcut(e) {
-  // 🔍 모든 키 입력 디버그 (E 키만)
-  if (e.key === 'E' || e.key === 'e' || e.code === 'KeyE') {
-    console.log('');
-    console.log('🔑 E 키 감지!!!');
-    console.log('📌 key:', e.key);
-    console.log('📌 code:', e.code);
-    console.log('📌 metaKey (Cmd):', e.metaKey);
-    console.log('📌 ctrlKey:', e.ctrlKey);
-    console.log('📌 shiftKey:', e.shiftKey);
-    console.log('📌 altKey:', e.altKey);
-    
-    // 조건 체크
-    const isEKey = e.key === 'E' || e.key === 'e' || e.code === 'KeyE';
-    const isModifiers = (e.metaKey || e.ctrlKey) && e.shiftKey && !e.altKey;
-    
-    console.log('');
-    console.log('🔍 조건 체크:');
-    console.log('  isEKey:', isEKey);
-    console.log('  isModifiers:', isModifiers);
-    console.log('  (metaKey || ctrlKey):', (e.metaKey || e.ctrlKey));
-    console.log('  shiftKey:', e.shiftKey);
-    console.log('  !altKey:', !e.altKey);
-    console.log('  최종 결과 (isEKey && isModifiers):', isEKey && isModifiers);
-    console.log('');
-  }
-  
-  // Cmd+Shift+E (Mac) 또는 Ctrl+Shift+E (Windows/Linux)
-  const isEKey = e.key === 'E' || e.key === 'e' || e.code === 'KeyE';
+  // Cmd+Shift+K (Mac) 또는 Ctrl+Shift+K (Windows/Linux)
+  const isKKey = e.key === 'K' || e.key === 'k' || e.code === 'KeyK';
   const isModifiers = (e.metaKey || e.ctrlKey) && e.shiftKey && !e.altKey;
   
-  if (isEKey && isModifiers) {
+  if (isKKey && isModifiers) {
     // 🔥🔥🔥 최우선: 즉시 selection 저장 (로그보다 먼저!)
     // 이벤트 차단보다도 먼저 selection을 캡처해야 함
     const windowSelection = window.getSelection();
@@ -1012,7 +986,7 @@ async function handleShortcut(e) {
     e.stopImmediatePropagation();
     
     console.log('');
-    console.log('⌨️⌨️⌨️ 단축키 감지! Cmd+Shift+E ⌨️⌨️⌨️');
+    console.log('⌨️⌨️⌨️ 단축키 감지! Cmd+Shift+K ⌨️⌨️⌨️');
     console.log('💾 즉시 저장한 selection:', savedText?.substring(0, 50) || '(없음)');
     console.log('💾 savedText 길이:', savedText?.length || 0);
     console.log('💾 activeElement:', activeElement?.tagName);
@@ -1035,7 +1009,7 @@ async function handleShortcut(e) {
       console.log(`📊 검사한 단어: ${checkedCount}개`);
       console.log(`⏱️ 소요 시간: ${duration}ms`);
       console.log('');
-    } catch (error) {
+      } catch (error) {
       console.error('❌ 맞춤법 검사 오류:', error);
     }
     
@@ -1068,9 +1042,9 @@ if (document.readyState === 'loading') {
 // 확장 프로그램 로드 확인
 console.log('');
 console.log('🎉 한글 맞춤법 검사기 Content Script 로드 완료!');
-console.log('⌨️  단축키 Cmd+Shift+E (Mac) / Ctrl+Shift+E (Windows)');
+console.log('⌨️  단축키 Cmd+Shift+K (Mac) / Ctrl+Shift+K (Windows)');
 console.log('🖱️  또는 텍스트 선택 후 우클릭 → 맞춤법 검사');
-console.log('✅ Window + Document + Body 3중 리스너 등록 (최강 감지)');
-console.log('📍 Run at: document_start (가장 빠른 주입)');
+console.log('✅ Window + Document + Body 3중 리스너 등록');
+console.log('📍 Run at: document_start');
 console.log('');
 
