@@ -1,6 +1,6 @@
 # 한글 맞춤법 검사기 (Korean Spell Checker)
 
-![Version](https://img.shields.io/badge/version-4.3.6-blue.svg)
+![Version](https://img.shields.io/badge/version-4.3.7-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 **선택한 텍스트의 맞춤법을 Gemini AI로 빠르고 정확하게 검사하는 Chrome 확장 프로그램**

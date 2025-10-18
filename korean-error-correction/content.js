@@ -849,37 +849,41 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-// 키보드 단축키 감지 (Content Script에서 직접)
-document.addEventListener('keydown', async (e) => {
-  // 디버그 로그
-  if (e.key === 'K' || e.key === 'k' || e.code === 'KeyK') {
-    console.log('🔑 K 키 감지:', {
+// 키보드 단축키 감지 함수
+async function handleShortcut(e) {
+  // 디버그 로그 (E 키만)
+  if (e.key === 'E' || e.key === 'e' || e.code === 'KeyE') {
+    console.log('🔑 E 키 감지:', {
       key: e.key,
       code: e.code,
       metaKey: e.metaKey,
       ctrlKey: e.ctrlKey,
       shiftKey: e.shiftKey,
-      altKey: e.altKey
+      altKey: e.altKey,
+      timeStamp: e.timeStamp
     });
   }
   
-  // Cmd+Shift+K (Mac) 또는 Ctrl+Shift+K (Windows/Linux)
-  // K 키는 일반적으로 시스템 단축키와 충돌하지 않음
-  const isKKey = e.key === 'K' || e.key === 'k' || e.code === 'KeyK';
+  // Cmd+Shift+E (Mac) 또는 Ctrl+Shift+E (Windows/Linux)
+  const isEKey = e.key === 'E' || e.key === 'e' || e.code === 'KeyE';
   const isModifiers = (e.metaKey || e.ctrlKey) && e.shiftKey && !e.altKey;
   
-  if (isKKey && isModifiers) {
-    e.preventDefault(); // 기본 동작 방지
-    e.stopPropagation(); // 이벤트 전파 중지
+  if (isEKey && isModifiers) {
+    console.log('🎯 Cmd+Shift+E 조합 감지! 이벤트 차단 시작...');
+    
+    // 즉시 이벤트 차단 (최우선)
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
     
     console.log('');
-    console.log('⌨️⌨️⌨️ 단축키 감지! Cmd+Shift+K ⌨️⌨️⌨️');
+    console.log('⌨️⌨️⌨️ 단축키 감지! Cmd+Shift+E ⌨️⌨️⌨️');
     console.log('🔍 맞춤법 검사 시작...');
     
     try {
       const startTime = Date.now();
-    const errorCount = await highlightErrors(document.body);
-    const checkedCount = countKoreanWords(document.body);
+      const errorCount = await highlightErrors(document.body);
+      const checkedCount = countKoreanWords(document.body);
       const duration = Date.now() - startTime;
       
       console.log('✅ 맞춤법 검사 완료!');
@@ -887,17 +891,42 @@ document.addEventListener('keydown', async (e) => {
       console.log(`📊 검사한 단어: ${checkedCount}개`);
       console.log(`⏱️ 소요 시간: ${duration}ms`);
       console.log('');
-      } catch (error) {
+    } catch (error) {
       console.error('❌ 맞춤법 검사 오류:', error);
     }
+    
+    return false; // 추가 차단
   }
-}, true); // capture phase에서 감지
+}
+
+// 다중 레벨 이벤트 리스너 등록 (최대한 빨리, 강력하게)
+// 1. Window 레벨 (최상위)
+window.addEventListener('keydown', handleShortcut, true);
+
+// 2. Document 레벨 (백업)
+document.addEventListener('keydown', handleShortcut, true);
+
+// 3. Document.body 레벨 (추가 백업) - DOM 로드 후
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    if (document.body) {
+      document.body.addEventListener('keydown', handleShortcut, true);
+      console.log('✅ Body 레벨 단축키 리스너 등록 완료');
+    }
+  });
+} else {
+  if (document.body) {
+    document.body.addEventListener('keydown', handleShortcut, true);
+    console.log('✅ Body 레벨 단축키 리스너 등록 완료');
+  }
+}
 
 // 확장 프로그램 로드 확인
 console.log('');
 console.log('🎉 한글 맞춤법 검사기 Content Script 로드 완료!');
-console.log('⌨️  단축키 Cmd+Shift+K (Mac) / Ctrl+Shift+K (Windows)');
+console.log('⌨️  단축키 Cmd+Shift+E (Mac) / Ctrl+Shift+E (Windows)');
 console.log('🖱️  또는 텍스트 선택 후 우클릭 → 맞춤법 검사');
-console.log('✅ Content Script에서 직접 단축키 감지');
+console.log('✅ Window + Document + Body 3중 리스너 등록 (최강 감지)');
+console.log('📍 Run at: document_start (가장 빠른 주입)');
 console.log('');
 
