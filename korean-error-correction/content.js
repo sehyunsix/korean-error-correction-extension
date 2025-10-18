@@ -954,6 +954,12 @@ async function handleShortcut(e) {
   // Cmd+Shift+E (Mac) 또는 Ctrl+Shift+E (Windows/Linux)
   const isEKey = e.key === 'E' || e.key === 'e' || e.code === 'KeyE';
   const isModifiers = (e.metaKey || e.ctrlKey) && e.shiftKey && !e.altKey;
+
+  onsole.log('');
+  console.log('⌨️⌨️⌨️ 단축키 감지! Cmd+Shift+E ⌨️⌨️⌨️');
+  console.log('💾 즉시 저장한 selection:', savedText?.substring(0, 50) || '(없음)');
+  console.log('💾 savedText 길이:', savedText?.length || 0);
+  console.log('💾 activeElement:', activeElement?.tagName);
   
   if (isEKey && isModifiers) {
     // 🔥🔥🔥 최우선: 즉시 selection 저장 (로그보다 먼저!)
