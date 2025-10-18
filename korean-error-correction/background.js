@@ -48,11 +48,14 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     } catch (error) {
       console.error('❌ 메시지 전송 실패:', error.message);
       
-      // 재시도
+      // 재시도 (selectionText 포함!)
       try {
         console.log('🔄 0.5초 후 재시도...');
         await new Promise(resolve => setTimeout(resolve, 500));
-        const retryResponse = await chrome.tabs.sendMessage(tab.id, { action: 'checkSpelling' });
+        const retryResponse = await chrome.tabs.sendMessage(tab.id, { 
+          action: 'checkSpelling',
+          selectionText: info.selectionText  // ← 재시도에도 selectionText 전달!
+        });
         console.log('✅ 재시도 성공!');
       } catch (retryError) {
         console.error('❌ 재시도 실패:', retryError.message);
