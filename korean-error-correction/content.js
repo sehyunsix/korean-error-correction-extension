@@ -23,7 +23,7 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
         savedRange = selectionInfo.selection.getRangeAt(0).cloneRange();
         console.log('💾 Range 저장 완료:', savedRange.toString());
       }
-    } catch (e) {
+  } catch (e) {
       console.warn('⚠️ Range 저장 실패:', e);
     }
   }
