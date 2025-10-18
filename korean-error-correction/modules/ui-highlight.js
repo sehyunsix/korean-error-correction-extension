@@ -205,28 +205,26 @@ function createErrorSpan(part) {
 }
 
 /**
- * 툴팁 요소 생성
+ * 툴팁 요소 생성 (Grammarly 스타일 말풍선)
  */
 function createTooltip(part) {
   const tooltip = document.createElement('div');
+  tooltip.className = 'korean-spell-tooltip-card';
   tooltip.style.cssText = `
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%);
-    background: #2c3e50;
-    color: white;
-    padding: 10px 14px;
-    border-radius: 8px;
+    position: fixed;
+    left: 0;
+    top: 0;
+    background: white;
+    padding: 0;
+    border-radius: 12px;
     font-size: 13px;
     white-space: normal;
-    max-width: 280px;
-    min-width: 150px;
-    z-index: 99999;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    width: 320px;
+    z-index: 999999;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
     display: none;
     pointer-events: none;
-    line-height: 1.5;
+    animation: tooltipFadeIn 0.2s ease;
   `;
 
   const suggestionText = part.suggestions && part.suggestions.length > 0
@@ -236,16 +234,46 @@ function createTooltip(part) {
   const infoText = part.info || '맞춤법 오류';
 
   tooltip.innerHTML = `
-    <div style="font-weight: bold; color: #ff6b6b; margin-bottom: 6px; font-size: 14px;">
-      ❌ "${part.content}"
+    <div style="background: #fee2e2; padding: 14px 16px; border-radius: 12px 12px 0 0; border-bottom: 1px solid #fecaca;">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+        <div style="width: 24px; height: 24px; background: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;">⚠</div>
+        <div style="font-weight: 700; color: #991b1b; font-size: 15px; flex: 1;">맞춤법 오류</div>
+      </div>
+      <div style="color: #7f1d1d; font-size: 14px; font-weight: 600; padding-left: 32px;">
+        "${part.content}"
+      </div>
     </div>
-    <div style="color: #fff; margin-bottom: 4px; font-size: 12px;">
-      <strong>제안:</strong> ${suggestionText}
-    </div>
-    <div style="color: #bdc3c7; font-size: 11px; border-top: 1px solid #555; padding-top: 4px; margin-top: 4px;">
-      ${infoText}
+    <div style="padding: 16px; background: white; border-radius: 0 0 12px 12px;">
+      <div style="margin-bottom: 12px;">
+        <div style="color: #6b7280; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">추천 수정</div>
+        <div style="color: #15C39A; font-size: 15px; font-weight: 700; padding: 8px 12px; background: #d1fae5; border-radius: 6px; border: 1px solid #a7f3d0;">
+          ${suggestionText}
+        </div>
+      </div>
+      <div style="color: #6b7280; font-size: 12px; line-height: 1.6; padding: 10px; background: #f9fafb; border-radius: 6px; border-left: 3px solid #15C39A;">
+        ${infoText}
+      </div>
     </div>
   `;
+
+  // CSS 애니메이션 추가
+  if (!document.getElementById('tooltip-animation-style')) {
+    const style = document.createElement('style');
+    style.id = 'tooltip-animation-style';
+    style.textContent = `
+      @keyframes tooltipFadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
 
   return tooltip;
 }
@@ -357,39 +385,48 @@ function createCorrectedSpan(replacement) {
 }
 
 /**
- * 수정된 텍스트용 툴팁 생성
+ * 수정된 텍스트용 툴팁 생성 (Grammarly 스타일 말풍선)
  */
 function createCorrectedTooltip(replacement) {
   const tooltip = document.createElement('div');
+  tooltip.className = 'korean-spell-corrected-tooltip-card';
   tooltip.style.cssText = `
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%);
-    background: #27ae60;
-    color: white;
-    padding: 10px 14px;
-    border-radius: 8px;
+    position: fixed;
+    left: 0;
+    top: 0;
+    background: white;
+    padding: 0;
+    border-radius: 12px;
     font-size: 13px;
     white-space: normal;
-    max-width: 280px;
-    min-width: 150px;
-    z-index: 99999;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    width: 320px;
+    z-index: 999999;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
     display: none;
     pointer-events: none;
-    line-height: 1.5;
+    animation: tooltipFadeIn 0.2s ease;
   `;
 
   tooltip.innerHTML = `
-    <div style="font-weight: bold; color: #fff; margin-bottom: 6px; font-size: 14px;">
-      ✅ "${replacement.corrected}"
+    <div style="background: #d1fae5; padding: 14px 16px; border-radius: 12px 12px 0 0; border-bottom: 1px solid #a7f3d0;">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+        <div style="width: 24px; height: 24px; background: #15C39A; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;">✓</div>
+        <div style="font-weight: 700; color: #065f46; font-size: 15px; flex: 1;">교정 완료</div>
+      </div>
+      <div style="color: #064e3b; font-size: 14px; font-weight: 600; padding-left: 32px;">
+        "${replacement.corrected}"
+      </div>
     </div>
-    <div style="color: #ecf0f1; margin-bottom: 4px; font-size: 12px;">
-      <strong>원본:</strong> "${replacement.original}"
-    </div>
-    <div style="color: #d5f4e6; font-size: 11px; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 4px; margin-top: 4px;">
-      ${replacement.info}
+    <div style="padding: 16px; background: white; border-radius: 0 0 12px 12px;">
+      <div style="margin-bottom: 12px;">
+        <div style="color: #6b7280; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">원본 텍스트</div>
+        <div style="color: #991b1b; font-size: 14px; font-weight: 600; padding: 8px 12px; background: #fee2e2; border-radius: 6px; border: 1px solid #fecaca; text-decoration: line-through; opacity: 0.8;">
+          ${replacement.original}
+        </div>
+      </div>
+      <div style="color: #6b7280; font-size: 12px; line-height: 1.6; padding: 10px; background: #f9fafb; border-radius: 6px; border-left: 3px solid #15C39A;">
+        ${replacement.info}
+      </div>
     </div>
   `;
 

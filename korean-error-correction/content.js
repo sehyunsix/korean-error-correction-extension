@@ -116,6 +116,18 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
     existingModal.remove();
   }
 
+  // 선택된 텍스트의 위치 가져오기
+  let selectionRect = null;
+  try {
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      selectionRect = range.getBoundingClientRect();
+    }
+  } catch (e) {
+    console.log('선택 위치 가져오기 실패, 중앙에 표시합니다:', e);
+  }
+
   // 모달 컨테이너 생성
   const modal = document.createElement('div');
   modal.id = 'spelling-correction-modal';
@@ -125,11 +137,8 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(15, 23, 42, 0.75);
-    backdrop-filter: blur(4px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(2px);
     z-index: 999999;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
     animation: modalFadeIn 0.2s ease;
@@ -137,14 +146,64 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
 
   // 모달 내용
   const modalContent = document.createElement('div');
+  
+  // 모달 위치 계산 (Grammarly 스타일 - 텍스트 옆에 표시)
+  let modalPosition = '';
+  if (selectionRect) {
+    const modalWidth = 480;
+    const modalMaxHeight = 600;
+    const padding = 16;
+    
+    // 기본적으로 선택된 텍스트 오른쪽에 표시
+    let left = selectionRect.right + padding;
+    let top = selectionRect.top;
+    
+    // 오른쪽 공간이 부족하면 왼쪽에 표시
+    if (left + modalWidth > window.innerWidth - padding) {
+      left = selectionRect.left - modalWidth - padding;
+    }
+    
+    // 왼쪽도 공간이 부족하면 텍스트 아래에 표시
+    if (left < padding) {
+      left = Math.max(padding, Math.min(selectionRect.left, window.innerWidth - modalWidth - padding));
+      top = selectionRect.bottom + padding;
+    }
+    
+    // 상단 경계 체크
+    if (top < padding) {
+      top = padding;
+    }
+    
+    // 하단 경계 체크
+    if (top + modalMaxHeight > window.innerHeight - padding) {
+      top = Math.max(padding, window.innerHeight - modalMaxHeight - padding);
+    }
+    
+    modalPosition = `
+      position: fixed;
+      left: ${left}px;
+      top: ${top}px;
+    `;
+  } else {
+    // 위치를 가져올 수 없으면 화면 중앙에 표시
+    modalPosition = `
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    `;
+  }
+  
   modalContent.style.cssText = `
+    ${modalPosition}
     background: white;
     border-radius: 16px;
     padding: 0;
-    max-width: 640px;
-    max-height: 85vh;
+    width: 480px;
+    max-width: calc(100vw - 32px);
+    max-height: 600px;
     overflow: hidden;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
     animation: modalSlideIn 0.3s ease;
   `;
   
