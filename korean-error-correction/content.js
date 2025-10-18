@@ -851,9 +851,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // 키보드 단축키 감지 (Content Script에서 직접)
 document.addEventListener('keydown', async (e) => {
-  // 디버그 로그 (E 키만)
-  if (e.key === 'E' || e.key === 'e' || e.code === 'KeyE') {
-    console.log('🔑 E 키 감지:', {
+  // 디버그 로그
+  if (e.key === 'K' || e.key === 'k' || e.code === 'KeyK') {
+    console.log('🔑 K 키 감지:', {
       key: e.key,
       code: e.code,
       metaKey: e.metaKey,
@@ -863,23 +863,23 @@ document.addEventListener('keydown', async (e) => {
     });
   }
   
-  // Cmd+Shift+E (Mac) 또는 Ctrl+Shift+E (Windows/Linux)
-  // key 값이 대소문자 모두 확인, code도 확인
-  const isEKey = e.key === 'E' || e.key === 'e' || e.code === 'KeyE';
+  // Cmd+Shift+K (Mac) 또는 Ctrl+Shift+K (Windows/Linux)
+  // K 키는 일반적으로 시스템 단축키와 충돌하지 않음
+  const isKKey = e.key === 'K' || e.key === 'k' || e.code === 'KeyK';
   const isModifiers = (e.metaKey || e.ctrlKey) && e.shiftKey && !e.altKey;
   
-  if (isEKey && isModifiers) {
+  if (isKKey && isModifiers) {
     e.preventDefault(); // 기본 동작 방지
     e.stopPropagation(); // 이벤트 전파 중지
     
     console.log('');
-    console.log('⌨️⌨️⌨️ 단축키 감지! (Content Script) ⌨️⌨️⌨️');
+    console.log('⌨️⌨️⌨️ 단축키 감지! Cmd+Shift+K ⌨️⌨️⌨️');
     console.log('🔍 맞춤법 검사 시작...');
     
     try {
       const startTime = Date.now();
-      const errorCount = await highlightErrors(document.body);
-      const checkedCount = countKoreanWords(document.body);
+    const errorCount = await highlightErrors(document.body);
+    const checkedCount = countKoreanWords(document.body);
       const duration = Date.now() - startTime;
       
       console.log('✅ 맞춤법 검사 완료!');
@@ -887,7 +887,7 @@ document.addEventListener('keydown', async (e) => {
       console.log(`📊 검사한 단어: ${checkedCount}개`);
       console.log(`⏱️ 소요 시간: ${duration}ms`);
       console.log('');
-    } catch (error) {
+      } catch (error) {
       console.error('❌ 맞춤법 검사 오류:', error);
     }
   }
@@ -896,7 +896,8 @@ document.addEventListener('keydown', async (e) => {
 // 확장 프로그램 로드 확인
 console.log('');
 console.log('🎉 한글 맞춤법 검사기 Content Script 로드 완료!');
-console.log('⌨️  단축키 Cmd+Shift+E를 눌러 선택한 텍스트를 검사하세요!');
-console.log('✅ Content Script에서 직접 단축키 감지 (Service Worker 불필요)');
+console.log('⌨️  단축키 Cmd+Shift+K (Mac) / Ctrl+Shift+K (Windows)');
+console.log('🖱️  또는 텍스트 선택 후 우클릭 → 맞춤법 검사');
+console.log('✅ Content Script에서 직접 단축키 감지');
 console.log('');
 
