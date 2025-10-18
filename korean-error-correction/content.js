@@ -72,15 +72,15 @@ function showLoadingModal() {
 
   // 스피너 애니메이션 추가 (Grammarly 스타일)
   if (!document.getElementById('spinner-animation-style')) {
-    const style = document.createElement('style');
+  const style = document.createElement('style');
     style.id = 'spinner-animation-style';
-    style.textContent = `
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-    `;
-    document.head.appendChild(style);
+  style.textContent = `
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  `;
+  document.head.appendChild(style);
   }
 
   modal.appendChild(loadingContent);
@@ -210,7 +210,14 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
     document.head.appendChild(style);
   }
 
-  // 수정 전 텍스트에 오류 하이라이트 적용
+  // 각 수정 사항의 상태 관리 (accepted: 적용, rejected: 거절, pending: 대기)
+  const correctionStates = errors.map((error, index) => ({
+    id: index,
+    error: error,
+    state: 'accepted' // 기본값: 모두 적용
+  }));
+
+  // 수정 전 텍스트에 삭제 부분 하이라이트 적용
   let highlightedOriginalText = originalText;
   if (errors.length > 0) {
     // 오류를 위치 순서대로 정렬 (뒤에서부터 처리하기 위해)
@@ -222,13 +229,13 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
 
     // 뒤에서부터 대체하여 인덱스가 틀어지지 않도록 함
     for (const error of sortedErrors) {
+      const errorIndex = errors.indexOf(error);
       const tokenIndex = highlightedOriginalText.lastIndexOf(error.token);
       if (tokenIndex !== -1) {
         const before = highlightedOriginalText.substring(0, tokenIndex);
         const after = highlightedOriginalText.substring(tokenIndex + error.token.length);
         highlightedOriginalText = before + 
-          `<span style="background: #ffebee; padding: 2px 4px; border-radius: 3px; text-decoration: line-through; color: #d32f2f; font-weight: 600;">${error.token}</span>` +
-          `<span style="color: #2196f3; font-weight: 600;">→${error.suggestions[0]}</span>` +
+          `<span class="deleted-text" data-correction-id="${errorIndex}" style="background: #ffe5e5; padding: 2px 4px; border-radius: 3px; text-decoration: line-through; color: #d32f2f; font-weight: 600;">${error.token}</span>` +
           after;
       }
     }
@@ -241,7 +248,7 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
         <div style="display: flex; align-items: center; gap: 8px;">
           <h2 style="margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -0.5px;">✨ 맞춤법 교정 완료</h2>
           <span style="background: rgba(255,255,255,0.25); padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">${elapsedSeconds}초</span>
-        </div>
+      </div>
         <button id="close-modal-header" style="
           background: rgba(255, 255, 255, 0.2);
           border: none;
@@ -265,7 +272,7 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
       <div style="display: flex; align-items: center; justify-content: space-between;">
         <div style="display: flex; align-items: center; gap: 12px;">
           <div style="width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px;">✓</div>
-          <div>
+      <div>
             <h2 style="margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px;">
               완벽합니다!
               <span style="background: rgba(255,255,255,0.25); padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">${elapsedSeconds}초</span>
@@ -292,7 +299,7 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
     </div>
   `;
   
-  // 교정된 텍스트에 하이라이트와 툴팁 추가
+  // 교정된 텍스트에 추가 부분 하이라이트와 툴팁 추가
   let highlightedCorrectedText = correctedText;
   if (errors.length > 0) {
     // 오류를 위치 순서대로 정렬 (뒤에서부터 처리하기 위해)
@@ -304,6 +311,7 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
 
     // 뒤에서부터 대체하여 인덱스가 틀어지지 않도록 함
     for (const error of sortedErrors) {
+      const errorIndex = errors.indexOf(error);
       const correctedWord = error.suggestions[0];
       const tokenIndex = highlightedCorrectedText.lastIndexOf(correctedWord);
       if (tokenIndex !== -1) {
@@ -311,14 +319,130 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
         const after = highlightedCorrectedText.substring(tokenIndex + correctedWord.length);
         const infoText = error.info || '맞춤법 오류';
         highlightedCorrectedText = before + 
-          `<span class="corrected-word-tooltip" style="background: #bbf7d0; padding: 2px 4px; border-radius: 3px; color: #065f46; font-weight: 600; cursor: help; position: relative;" data-original="${error.token}" data-info="${infoText.replace(/"/g, '&quot;')}">${correctedWord}</span>` +
+          `<span class="corrected-word-tooltip added-text" data-correction-id="${errorIndex}" style="background: #c8e6c9; padding: 2px 4px; border-radius: 3px; color: #2e7d32; font-weight: 600; cursor: help; position: relative;" data-original="${error.token}" data-info="${infoText.replace(/"/g, '&quot;')}">${correctedWord}</span>` +
           after;
       }
     }
   }
 
+  // 수정 사항 리스트 HTML 생성
+  let correctionListHTML = '';
+  if (errors.length > 0) {
+    correctionListHTML = errors.map((error, index) => `
+      <div class="correction-item" data-correction-id="${index}" style="
+        padding: 12px 16px;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        background: #f9fafb;
+        margin-bottom: 8px;
+        transition: all 0.2s;
+      ">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 11px; font-weight: 700; color: #6b7280; background: #e5e7eb; padding: 2px 8px; border-radius: 10px;">#${index + 1}</span>
+            <span class="correction-status-badge" style="font-size: 11px; font-weight: 600; color: #15C39A; background: #d1fae5; padding: 2px 8px; border-radius: 10px;">✓ 적용됨</span>
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <button class="accept-btn" data-correction-id="${index}" style="
+              background: #15C39A;
+              color: white;
+              border: none;
+              padding: 4px 10px;
+              border-radius: 6px;
+              font-size: 12px;
+              font-weight: 600;
+              cursor: pointer;
+              transition: all 0.2s;
+            ">✓ 적용</button>
+            <button class="reject-btn" data-correction-id="${index}" style="
+              background: #e5e7eb;
+              color: #6b7280;
+              border: none;
+              padding: 4px 10px;
+              border-radius: 6px;
+              font-size: 12px;
+              font-weight: 600;
+              cursor: pointer;
+              transition: all 0.2s;
+            ">✕ 거절</button>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">
+          <span style="background: #ffe5e5; color: #d32f2f; padding: 4px 8px; border-radius: 4px; font-size: 13px; font-weight: 600; text-decoration: line-through;">${error.token}</span>
+          <span style="color: #9ca3af; font-size: 16px;">→</span>
+          <span style="background: #c8e6c9; color: #2e7d32; padding: 4px 8px; border-radius: 4px; font-size: 13px; font-weight: 600;">${error.suggestions[0]}</span>
+        </div>
+        <div style="font-size: 12px; color: #6b7280; line-height: 1.5; padding: 8px; background: white; border-radius: 4px; border-left: 3px solid #15C39A;">
+          ${error.info || '맞춤법 오류'}
+        </div>
+      </div>
+    `).join('');
+  }
+
   // 텍스트 비교 HTML (2단 레이아웃 - 네이버 스타일)
   const comparisonHTML = originalText !== correctedText ? `
+    <!-- 수정 사항 요약 및 네비게이션 -->
+    <div style="background: #f9fafb; padding: 16px 24px; border-bottom: 1px solid #e5e7eb;">
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 14px; font-weight: 700; color: #1f2937;">
+            총 <span style="color: #15C39A;">${errors.length}개</span> 수정 사항
+          </span>
+          <span id="accepted-count" style="font-size: 13px; color: #6b7280;">
+            <span style="color: #15C39A; font-weight: 600;">${errors.length}개</span> 적용됨
+          </span>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <span id="current-correction-index" style="font-size: 13px; font-weight: 600; color: #6b7280;">1/${errors.length}</span>
+          <button id="prev-correction" style="
+            background: white;
+            border: 1px solid #e5e7eb;
+            color: #6b7280;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+          ">◀ 이전</button>
+          <button id="next-correction" style="
+            background: white;
+            border: 1px solid #e5e7eb;
+            color: #6b7280;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+          ">다음 ▶</button>
+          <button id="accept-all" style="
+            background: #15C39A;
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-left: 8px;
+          ">✓ 전체 적용</button>
+          <button id="reject-all" style="
+            background: #ef4444;
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+          ">✕ 전체 거절</button>
+        </div>
+      </div>
+    </div>
+
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #e5e7eb; padding: 0;">
       <!-- 왼쪽: 원문 -->
       <div style="background: white; padding: 24px;">
@@ -337,6 +461,14 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
           <div style="font-size: 11px; color: #9ca3af; font-weight: 500;">${correctedText.length}자</div>
         </div>
         <div id="corrected-text-container" style="padding: 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; line-height: 1.8; white-space: pre-wrap; word-break: break-word; font-size: 14px; color: #1f2937; min-height: 120px;">${highlightedCorrectedText}</div>
+      </div>
+    </div>
+
+    <!-- 수정 사항 상세 리스트 -->
+    <div style="background: white; padding: 24px; border-top: 1px solid #e5e7eb;">
+      <div style="font-weight: 700; color: #1f2937; font-size: 15px; letter-spacing: -0.3px; margin-bottom: 16px;">📝 수정 사항 상세</div>
+      <div id="correction-list-container" style="max-height: 400px; overflow-y: auto;">
+        ${correctionListHTML}
       </div>
     </div>
   ` : `
@@ -416,7 +548,7 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
       scrollbar-width: thin;
       scrollbar-color: #cbd5e1 #f1f5f9;
     ">
-      ${comparisonHTML}
+    ${comparisonHTML}
     </div>
     <div id="action-status" style="
       margin: 0 24px 12px 24px;
@@ -533,6 +665,164 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
     });
   });
 
+  // 네비게이션 및 승인/거절 기능 구현
+  let currentCorrectionIndex = 0;
+
+  // 현재 보고 있는 수정 사항 업데이트
+  function updateCurrentCorrection(index) {
+    currentCorrectionIndex = index;
+    const indexDisplay = modalContent.querySelector('#current-correction-index');
+    if (indexDisplay) {
+      indexDisplay.textContent = `${index + 1}/${errors.length}`;
+    }
+
+    // 모든 수정 항목의 하이라이트 제거
+    const allItems = modalContent.querySelectorAll('.correction-item');
+    allItems.forEach(item => {
+      item.style.border = '2px solid transparent';
+      item.style.background = '#f9fafb';
+    });
+
+    // 현재 항목 하이라이트
+    const currentItem = modalContent.querySelector(`.correction-item[data-correction-id="${index}"]`);
+    if (currentItem) {
+      currentItem.style.border = '2px solid #fbbf24';
+      currentItem.style.background = '#fffbeb';
+      currentItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // 이전/다음 버튼 상태 업데이트
+    const prevBtn = modalContent.querySelector('#prev-correction');
+    const nextBtn = modalContent.querySelector('#next-correction');
+    if (prevBtn) prevBtn.disabled = (index === 0);
+    if (nextBtn) nextBtn.disabled = (index === errors.length - 1);
+  }
+
+  // 최종 텍스트 생성 (승인된 수정만 반영)
+  function generateFinalText() {
+    let finalText = originalText;
+    const acceptedCorrections = correctionStates
+      .filter(state => state.state === 'accepted')
+      .sort((a, b) => {
+        // 뒤에서부터 적용해야 인덱스가 안 틀어짐
+        const indexA = finalText.lastIndexOf(a.error.token);
+        const indexB = finalText.lastIndexOf(b.error.token);
+        return indexB - indexA;
+      });
+
+    for (const correction of acceptedCorrections) {
+      const tokenIndex = finalText.lastIndexOf(correction.error.token);
+      if (tokenIndex !== -1) {
+        finalText = finalText.substring(0, tokenIndex) +
+          correction.error.suggestions[0] +
+          finalText.substring(tokenIndex + correction.error.token.length);
+      }
+    }
+
+    return finalText;
+  }
+
+  // 승인/거절 상태 업데이트
+  function updateCorrectionState(correctionId, newState) {
+    correctionStates[correctionId].state = newState;
+
+    // UI 업데이트
+    const item = modalContent.querySelector(`.correction-item[data-correction-id="${correctionId}"]`);
+    if (!item) return;
+
+    const statusBadge = item.querySelector('.correction-status-badge');
+    const acceptBtn = item.querySelector('.accept-btn');
+    const rejectBtn = item.querySelector('.reject-btn');
+
+    if (newState === 'accepted') {
+      statusBadge.style.color = '#15C39A';
+      statusBadge.style.background = '#d1fae5';
+      statusBadge.textContent = '✓ 적용됨';
+      acceptBtn.style.background = '#15C39A';
+      acceptBtn.style.color = 'white';
+      rejectBtn.style.background = '#e5e7eb';
+      rejectBtn.style.color = '#6b7280';
+    } else if (newState === 'rejected') {
+      statusBadge.style.color = '#ef4444';
+      statusBadge.style.background = '#fee2e2';
+      statusBadge.textContent = '✕ 거절됨';
+      acceptBtn.style.background = '#e5e7eb';
+      acceptBtn.style.color = '#6b7280';
+      rejectBtn.style.background = '#ef4444';
+      rejectBtn.style.color = 'white';
+    }
+
+    // 승인된 개수 업데이트
+    const acceptedCount = correctionStates.filter(s => s.state === 'accepted').length;
+    const acceptedCountDisplay = modalContent.querySelector('#accepted-count');
+    if (acceptedCountDisplay) {
+      acceptedCountDisplay.innerHTML = `<span style="color: #15C39A; font-weight: 600;">${acceptedCount}개</span> 적용됨`;
+    }
+  }
+
+  // 네비게이션 버튼 이벤트
+  const prevBtn = modalContent.querySelector('#prev-correction');
+  const nextBtn = modalContent.querySelector('#next-correction');
+
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+      if (currentCorrectionIndex > 0) {
+        updateCurrentCorrection(currentCorrectionIndex - 1);
+      }
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      if (currentCorrectionIndex < errors.length - 1) {
+        updateCurrentCorrection(currentCorrectionIndex + 1);
+      }
+    });
+  }
+
+  // 전체 적용/거절 버튼
+  const acceptAllBtn = modalContent.querySelector('#accept-all');
+  const rejectAllBtn = modalContent.querySelector('#reject-all');
+
+  if (acceptAllBtn) {
+    acceptAllBtn.addEventListener('click', () => {
+      correctionStates.forEach((state, index) => {
+        updateCorrectionState(index, 'accepted');
+      });
+    });
+  }
+
+  if (rejectAllBtn) {
+    rejectAllBtn.addEventListener('click', () => {
+      correctionStates.forEach((state, index) => {
+        updateCorrectionState(index, 'rejected');
+      });
+    });
+  }
+
+  // 개별 승인/거절 버튼
+  const acceptBtns = modalContent.querySelectorAll('.accept-btn');
+  const rejectBtns = modalContent.querySelectorAll('.reject-btn');
+
+  acceptBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const correctionId = parseInt(btn.getAttribute('data-correction-id'));
+      updateCorrectionState(correctionId, 'accepted');
+    });
+  });
+
+  rejectBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const correctionId = parseInt(btn.getAttribute('data-correction-id'));
+      updateCorrectionState(correctionId, 'rejected');
+    });
+  });
+
+  // 초기 상태 설정
+  if (errors.length > 0) {
+    updateCurrentCorrection(0);
+  }
+
   // 수정하기 버튼 (selectionInfo가 있을 때만)
   if (replaceBtn && selectionInfo) {
     replaceBtn.addEventListener('mouseenter', () => {
@@ -551,7 +841,10 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
         console.log('\n=== 텍스트 수정하기 시작 ===');
         console.log('📦 selectionInfo:', selectionInfo);
         console.log('📝 selectionInfo.type:', selectionInfo?.type);
-        console.log('📝 correctedText:', correctedText?.substring(0, 100));
+        
+        // 최종 텍스트 생성 (승인된 수정만 반영)
+        const finalText = generateFinalText();
+        console.log('📝 finalText:', finalText?.substring(0, 100));
         
         let success = false;
 
@@ -574,13 +867,13 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
           
           // 값 대체
           const originalValue = element.value;
-          element.value = element.value.substring(0, start) + correctedText + element.value.substring(end);
+          element.value = element.value.substring(0, start) + finalText + element.value.substring(end);
           console.log('✅ 값 대체 완료');
           console.log(`  원본: "${originalValue.substring(start, end)}"`);
-          console.log(`  대체: "${correctedText}"`);
+          console.log(`  대체: "${finalText}"`);
           
           // 커서 위치 설정 (교정된 텍스트 끝으로)
-          const newCursorPos = start + correctedText.length;
+          const newCursorPos = start + finalText.length;
           element.setSelectionRange(newCursorPos, newCursorPos);
           element.focus();
           
@@ -614,10 +907,10 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
             savedRange.deleteContents();
             console.log('✅ 기존 내용 삭제 완료');
             
-            // 하이라이트와 hover가 적용된 텍스트 삽입
-            const fragment = createCorrectedTextWithTooltip(originalText, correctedText, errors);
-            savedRange.insertNode(fragment);
-            console.log('✅ 새 텍스트 삽입 완료 (hover 기능 포함)');
+            // 최종 텍스트 삽입
+            const textNode = document.createTextNode(finalText);
+            savedRange.insertNode(textNode);
+            console.log('✅ 새 텍스트 삽입 완료');
             
             // 선택 해제 및 커서를 끝으로 이동
             iframeSelection.removeAllRanges();
@@ -650,10 +943,10 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
             range.deleteContents();
             console.log('✅ 기존 내용 삭제 완료');
             
-            // 하이라이트와 hover가 적용된 텍스트 삽입
-            const fragment = createCorrectedTextWithTooltip(originalText, correctedText, errors);
-            range.insertNode(fragment);
-            console.log('✅ 새 텍스트 삽입 완료 (hover 기능 포함)');
+            // 최종 텍스트 삽입
+            const textNode = document.createTextNode(finalText);
+            range.insertNode(textNode);
+            console.log('✅ 새 텍스트 삽입 완료');
             
             // 선택 해제 및 커서를 끝으로 이동
             selection.removeAllRanges();
@@ -724,13 +1017,15 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
   // 복사 버튼 클릭
   copyBtn.addEventListener('click', async () => {
     try {
-      await navigator.clipboard.writeText(correctedText);
+      // 최종 텍스트 생성 (승인된 수정만 반영)
+      const finalText = generateFinalText();
+      await navigator.clipboard.writeText(finalText);
       actionStatus.textContent = '✅ 클립보드에 복사되었습니다!';
       actionStatus.style.background = '#e8f5e9';
       actionStatus.style.color = '#388e3c';
       actionStatus.style.display = 'block';
       
-      console.log('✅ 클립보드 복사 성공:', correctedText.substring(0, 50) + '...');
+      console.log('✅ 클립보드 복사 성공:', finalText.substring(0, 50) + '...');
       
       // 0.5초 후 모달 자동 닫기
       setTimeout(() => {
