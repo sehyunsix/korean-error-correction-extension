@@ -851,9 +851,26 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // 키보드 단축키 감지 (Content Script에서 직접)
 document.addEventListener('keydown', async (e) => {
+  // 디버그 로그 (E 키만)
+  if (e.key === 'E' || e.key === 'e' || e.code === 'KeyE') {
+    console.log('🔑 E 키 감지:', {
+      key: e.key,
+      code: e.code,
+      metaKey: e.metaKey,
+      ctrlKey: e.ctrlKey,
+      shiftKey: e.shiftKey,
+      altKey: e.altKey
+    });
+  }
+  
   // Cmd+Shift+E (Mac) 또는 Ctrl+Shift+E (Windows/Linux)
-  if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'E') {
+  // key 값이 대소문자 모두 확인, code도 확인
+  const isEKey = e.key === 'E' || e.key === 'e' || e.code === 'KeyE';
+  const isModifiers = (e.metaKey || e.ctrlKey) && e.shiftKey && !e.altKey;
+  
+  if (isEKey && isModifiers) {
     e.preventDefault(); // 기본 동작 방지
+    e.stopPropagation(); // 이벤트 전파 중지
     
     console.log('');
     console.log('⌨️⌨️⌨️ 단축키 감지! (Content Script) ⌨️⌨️⌨️');
@@ -861,8 +878,8 @@ document.addEventListener('keydown', async (e) => {
     
     try {
       const startTime = Date.now();
-    const errorCount = await highlightErrors(document.body);
-    const checkedCount = countKoreanWords(document.body);
+      const errorCount = await highlightErrors(document.body);
+      const checkedCount = countKoreanWords(document.body);
       const duration = Date.now() - startTime;
       
       console.log('✅ 맞춤법 검사 완료!');
@@ -870,11 +887,11 @@ document.addEventListener('keydown', async (e) => {
       console.log(`📊 검사한 단어: ${checkedCount}개`);
       console.log(`⏱️ 소요 시간: ${duration}ms`);
       console.log('');
-  } catch (error) {
+    } catch (error) {
       console.error('❌ 맞춤법 검사 오류:', error);
     }
   }
-});
+}, true); // capture phase에서 감지
 
 // 확장 프로그램 로드 확인
 console.log('');
