@@ -76,7 +76,14 @@ async function checkSpellingWithGemini(text, apiKey) {
     console.error('오류 메시지:', error.message);
     console.error('스택 트레이스:', error.stack);
     console.error('');
-    return null;
+    
+    // 오류 정보를 객체로 반환
+    return {
+      isError: true,
+      errorType: error.name,
+      errorMessage: error.message,
+      errors: []
+    };
   }
 }
 

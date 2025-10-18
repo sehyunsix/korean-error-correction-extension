@@ -305,9 +305,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
     
-    testBtn.textContent = '교정 중...';
+      testBtn.textContent = '교정 중...';
     testBtn.disabled = true;
     testResult.style.display = 'none';
+    
+    // 상태 메시지 초기화
+    const statusDiv = document.getElementById('status');
+    if (statusDiv) {
+      statusDiv.style.display = 'none';
+    }
     
     try {
       const startTime = Date.now();
@@ -502,7 +508,46 @@ JSON만 출력하고 다른 설명은 하지 마세요.`
       }
       
     } catch (error) {
-      alert(`오류: ${error.message}`);
+      console.error('[팝업 테스트] 오류:', error);
+      
+      // 상태 메시지 표시
+      const statusDiv = document.getElementById('status');
+      if (statusDiv) {
+        statusDiv.className = 'error';
+        statusDiv.style.display = 'block';
+        
+        let errorMsg = '오류가 발생했습니다.';
+        
+        // API Key 오류
+        if (error.message.includes('403') || error.message.includes('Forbidden')) {
+          errorMsg = '❌ API Key가 유효하지 않습니다.\n올바른 API Key를 입력해주세요.\n\nhttps://aistudio.google.com/app/apikey';
+        } 
+        // 모델 없음 오류
+        else if (error.message.includes('404') || error.message.includes('Not Found')) {
+          errorMsg = '❌ 모델을 찾을 수 없습니다.\n🔄 버튼을 눌러 모델 목록을 새로고침하고\n다른 모델을 선택해주세요.';
+        }
+        // 호출 한도 초과
+        else if (error.message.includes('429')) {
+          errorMsg = '❌ API 호출 한도를 초과했습니다.\n잠시 후 다시 시도해주세요.';
+        }
+        // 네트워크 오류
+        else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+          errorMsg = '❌ 네트워크 오류가 발생했습니다.\n인터넷 연결을 확인해주세요.';
+        }
+        // 기타 오류
+        else {
+          errorMsg = `❌ 오류: ${error.message}`;
+        }
+        
+        statusDiv.textContent = errorMsg;
+        
+        // 5초 후 자동 숨김
+        setTimeout(() => {
+          statusDiv.style.display = 'none';
+        }, 5000);
+      } else {
+        alert(`오류: ${error.message}`);
+      }
     } finally {
       testBtn.textContent = '교정하기';
       testBtn.disabled = false;

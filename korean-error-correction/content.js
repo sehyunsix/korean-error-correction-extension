@@ -51,12 +51,30 @@ async function highlightErrors(bodyElement) {
 
   try {
     // API로 맞춤법 검사
-    const errors = await checkSpellingWithAPI(selectedText);
+    const result = await checkSpellingWithAPI(selectedText);
     
-    if (errors === null) {
+    if (result === null || result === undefined) {
       alert('맞춤법 검사에 실패했습니다. 콘솔을 확인하세요.');
       return 0;
     }
+    
+    // API 오류 체크
+    if (result.isError) {
+      let errorMsg = `맞춤법 검사 오류: ${result.errorMessage}`;
+      
+      if (result.errorMessage.includes('403')) {
+        errorMsg = '❌ API Key가 유효하지 않습니다.\n\n팝업에서 올바른 API Key를 입력해주세요.\nhttps://aistudio.google.com/app/apikey';
+      } else if (result.errorMessage.includes('404')) {
+        errorMsg = '❌ 모델을 찾을 수 없습니다.\n\n팝업에서 다른 모델을 선택해주세요.\n(🔄 버튼으로 모델 목록 새로고침)';
+      } else if (result.errorMessage.includes('429')) {
+        errorMsg = '❌ API 호출 한도를 초과했습니다.\n\n잠시 후 다시 시도해주세요.';
+      }
+      
+      alert(errorMsg);
+      return 0;
+    }
+    
+    const errors = Array.isArray(result) ? result : (result.errors || []);
 
     // 선택 범위 가져오기
     const range = selection.getRangeAt(0);
