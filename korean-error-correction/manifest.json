@@ -1,0 +1,54 @@
+{
+  "manifest_version": 3,
+  "name": "한글 맞춤법 검사기",
+  "version": "3.9.3",
+  "version_name": "3.9.3 - 변수 충돌 수정 및 pre-commit hook 추가",
+  "description": "텍스트를 선택하면 ET5 AI 모델로 교정해주는 맞춤법 검사기",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "commands": {
+    "check-selection": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+E",
+        "mac": "Command+Shift+E"
+      },
+      "description": "선택한 텍스트 맞춤법 검사"
+    }
+  },
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*",
+    "https://generativelanguage.googleapis.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}
+

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>한글 맞춤법 검사기</title>
+  <style>
+  body {
+    width: 360px;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
+    margin: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+  }
+    
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      padding: 20px;
+      color: #333;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+    
+    h1 {
+      margin: 0 0 10px 0;
+      font-size: 20px;
+      color: #667eea;
+      text-align: center;
+    }
+    
+    p {
+      margin: 0 0 20px 0;
+      font-size: 13px;
+      color: #666;
+      text-align: center;
+      line-height: 1.5;
+    }
+    
+    button {
+      width: 100%;
+      padding: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 10px;
+    }
+    
+    #checkBtn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    #checkBtn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    #clearBtn {
+      background: #f5f5f5;
+      color: #666;
+    }
+    
+    #clearBtn:hover {
+      background: #e0e0e0;
+    }
+    
+    #status {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      text-align: center;
+      display: none;
+    }
+    
+    #status.success {
+      background: #e8f5e9;
+      color: #2e7d32;
+      display: block;
+    }
+    
+    #status.error {
+      background: #ffebee;
+      color: #c62828;
+      display: block;
+    }
+    
+    #status.info {
+      background: #e3f2fd;
+      color: #1565c0;
+      display: block;
+    }
+    
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #e0e0e0;
+    }
+    
+    .stat-item {
+      text-align: center;
+    }
+    
+    .stat-number {
+      font-size: 24px;
+      font-weight: bold;
+      color: #667eea;
+    }
+    
+    .stat-label {
+      font-size: 11px;
+      color: #999;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 한글 맞춤법 검사기</h1>
+    <p style="line-height: 1.6;">
+      <strong>📌 사용 방법:</strong><br>
+      1️⃣ 검사할 텍스트를 드래그로 선택<br>
+      2️⃣ 단축키 <kbd style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-family: monospace;">Cmd+Shift+E</kbd> 또는 버튼 클릭<br>
+      3️⃣ <span style="color: #f44336;">빨간색</span>은 오류 (마우스 오버로 확인), <span style="color: #4caf50;">초록색</span>은 정상
+    </p>
+    
+    <button id="checkBtn">선택한 텍스트 검사</button>
+    <button id="clearBtn">표시 지우기</button>
+    
+    <!-- Gemini API 설정 -->
+    <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #667eea;">
+      <div style="font-size: 14px; font-weight: 600; color: #667eea; margin-bottom: 10px; text-align: center;">
+        🤖 Gemini API 설정
+      </div>
+      <div style="margin-bottom: 10px;">
+        <label style="display: block; font-size: 12px; color: #666; margin-bottom: 5px;">
+          API Key (선택사항 - 입력 시 Gemini 사용):
+        </label>
+        <div style="display: flex; gap: 5px;">
+          <input type="password" id="geminiApiKey" 
+            placeholder="Gemini API Key 입력" 
+            style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+          <button id="saveApiKey" style="padding: 8px 12px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap;">
+            저장
+          </button>
+        </div>
+      </div>
+      
+      <!-- 모델 선택 -->
+      <div id="modelSelectContainer" style="margin-top: 10px; display: none;">
+        <label style="display: block; font-size: 12px; color: #666; margin-bottom: 5px;">
+          사용할 모델 선택:
+        </label>
+        <div style="display: flex; gap: 5px; align-items: center;">
+          <select id="geminiModel" 
+            style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; background: white;">
+            <option value="">모델 선택...</option>
+          </select>
+          <button id="refreshModels" style="padding: 8px 12px; background: #4caf50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap;" title="모델 목록 새로고침">
+            🔄
+          </button>
+        </div>
+        <div style="font-size: 11px; color: #999; margin-top: 5px;" id="modelInfo">
+          API Key를 입력하면 사용 가능한 모델 목록이 표시됩니다.
+        </div>
+      </div>
+    </div>
+    
+    <!-- API 테스트 영역 -->
+    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+      <div style="font-size: 14px; font-weight: 600; color: #667eea; margin-bottom: 10px; text-align: center;">
+        🧪 AI 교정 테스트
+      </div>
+      <textarea id="testInput" 
+        placeholder="테스트할 텍스트를 입력하세요&#10;예: 아늬 진짜 무ㅓ하냐고" 
+        style="width: 100%; min-height: 60px; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; resize: vertical; font-family: inherit; box-sizing: border-box;"></textarea>
+      <button id="testBtn" style="width: 100%; margin-top: 10px; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;">
+        교정하기
+      </button>
+      <div id="testResult" style="display: none; margin-top: 10px; padding: 12px; background: #f8f9fa; border-radius: 6px; font-size: 13px; line-height: 1.6;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span style="font-weight: 600; color: #2e7d32;">✅ 교정 결과:</span>
+          <button id="copyBtn" style="padding: 4px 12px; background: #4caf50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">복사</button>
+        </div>
+        <div id="resultText" style="padding: 8px; background: white; border-radius: 4px; white-space: pre-wrap; word-break: break-word;"></div>
+        <div id="testTime" style="margin-top: 8px; font-size: 11px; color: #999; text-align: right;"></div>
+      </div>
+    </div>
+    
+    <!-- API 상태 표시 -->
+    <div id="apiStatus" style="margin-top: 15px; padding: 12px; border-radius: 8px; font-size: 12px; display: none;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+        <span style="font-weight: 600;">검사 방식:</span>
+        <span id="apiMode" style="font-weight: bold;"></span>
+      </div>
+      <div id="apiServerStatus" style="display: flex; align-items: center; justify-content: space-between;">
+        <span>서버 상태:</span>
+        <span id="serverStatusText"></span>
+      </div>
+    </div>
+    
+    
+    <div id="status"></div>
+    
+    <div class="stats" id="stats" style="display: none;">
+      <div class="stat-item">
+        <div class="stat-number" id="errorCount">0</div>
+        <div class="stat-label">발견된 오류</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number" id="checkedCount">0</div>
+        <div class="stat-label">검사한 단어</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number" id="checkMethod" style="font-size: 16px;">-</div>
+        <div class="stat-label">검사 방식</div>
+      </div>
+    </div>
+    
+    <!-- 검사 통계 표시 영역 -->
+    <div id="apiStats" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid #e0e0e0;">
+      <div style="font-size: 13px; font-weight: 600; color: #667eea; margin-bottom: 10px;">📊 검사 결과</div>
+      
+      <!-- 선택된 텍스트 표시 -->
+      <div id="selectedTextDisplay" style="background: #f8f9fa; padding: 10px; border-radius: 6px; margin-bottom: 10px; font-size: 12px;">
+        <div style="color: #999; font-size: 10px; margin-bottom: 5px;">선택된 텍스트:</div>
+        <div style="color: #333; font-weight: 500; line-height: 1.5;" id="statSelectedText">-</div>
+      </div>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 12px; margin-bottom: 8px;">
+        <div style="background: #e3f2fd; padding: 8px; border-radius: 6px;">
+          <div style="color: #1976d2; font-size: 10px;">텍스트 길이</div>
+          <div style="color: #1976d2; font-weight: 600;" id="statTextLength">-</div>
+        </div>
+        <div style="background: #ffebee; padding: 8px; border-radius: 6px;">
+          <div style="color: #c62828; font-size: 10px;">발견 오류</div>
+          <div style="color: #c62828; font-weight: 600;" id="statFoundErrors">-</div>
+        </div>
+        <div style="background: #e8f5e9; padding: 8px; border-radius: 6px;">
+          <div style="color: #2e7d32; font-size: 10px;">API 상태</div>
+          <div style="color: #2e7d32; font-weight: 600;" id="statApiStatus">-</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 서버 로그 표시 영역 -->
+    <div id="serverLogs" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid #e0e0e0;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+        <span style="font-size: 13px; font-weight: 600; color: #667eea;">📋 서버 로그</span>
+        <button id="toggleLogs" style="background: none; border: none; cursor: pointer; font-size: 12px; color: #667eea; padding: 4px 8px;">접기</button>
+      </div>
+      <div id="logsContainer" style="max-height: 200px; overflow-y: auto; background: #f8f9fa; border-radius: 6px; padding: 10px; font-size: 11px; line-height: 1.6;">
+        <!-- 로그가 여기에 표시됩니다 -->
+      </div>
+    </div>
+    
+    <!-- 버전 정보 -->
+    <div style="text-align: center; margin-top: 15px; padding-top: 15px; border-top: 1px solid #e0e0e0;">
+      <span id="versionInfo" style="font-size: 11px; color: #999;">v1.1.0</span>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
+

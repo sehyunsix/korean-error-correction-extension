@@ -1,0 +1,35 @@
+# Node modules
+node_modules/
+server/node_modules/
+
+# npm 로그
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 환경 변수
+.env
+.env.local
+
+# OS 파일
+.DS_Store
+Thumbs.db
+
+# IDE 설정
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 빌드 파일
+dist/
+build/
+
+# 로그 파일
+*.log
+
+# 임시 파일
+*.tmp
+.cache/
+

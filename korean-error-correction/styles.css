@@ -1,0 +1,40 @@
+/* 한글 맞춤법 오류 하이라이트 스타일 */
+.korean-spell-error {
+  background-color: #ffcccc !important;
+  border-bottom: 2px solid #ff0000 !important;
+  cursor: help !important;
+  position: relative;
+  transition: all 0.3s ease;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+.korean-spell-error:hover {
+  background-color: #ffaaaa !important;
+  border-bottom-width: 3px !important;
+}
+
+.korean-spell-error::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #333;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 10000;
+  margin-bottom: 5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.korean-spell-error:hover::after {
+  opacity: 1;
+}
+
