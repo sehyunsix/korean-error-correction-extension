@@ -28,9 +28,21 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     console.log('⏰ 시간:', new Date().toLocaleTimeString());
     console.log('='.repeat(80));
     
-    // Content script에 메시지 전송
+    // 🔥 Chrome API가 제공하는 selectionText 사용!
+    if (!info.selectionText || !info.selectionText.trim()) {
+      console.warn('⚠️ 선택된 텍스트가 없습니다!');
+      console.log('='.repeat(80));
+      return;
+    }
+    
+    console.log('💾 전송할 selectionText:', info.selectionText.substring(0, 100));
+    
+    // Content script에 메시지 전송 (selectionText 포함!)
     try {
-      const response = await chrome.tabs.sendMessage(tab.id, { action: 'checkSpelling' });
+      const response = await chrome.tabs.sendMessage(tab.id, { 
+        action: 'checkSpelling',
+        selectionText: info.selectionText  // ← 선택된 텍스트 전달!
+      });
       console.log('✅ 메시지 전송 성공!');
       console.log('📥 응답:', response);
     } catch (error) {
