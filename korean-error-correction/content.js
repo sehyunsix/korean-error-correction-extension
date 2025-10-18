@@ -631,7 +631,7 @@ function getSelectedText() {
         start: start,
         end: end
       };
-    } else {
+  } else {
       console.log('📝 Input/Textarea에 선택 없음');
     }
   }
@@ -698,7 +698,7 @@ async function highlightErrors(bodyElement) {
   const selectedText = selectionInfo.text;
   console.log(`✅ 선택된 텍스트 (${selectionInfo.type}): "${selectedText.substring(0, 100)}..."`);
 
-  // 하이라이트 제거
+// 하이라이트 제거
   clearHighlights();
 
   try {
@@ -849,9 +849,37 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
+// 키보드 단축키 감지 (Content Script에서 직접)
+document.addEventListener('keydown', async (e) => {
+  // Cmd+Shift+E (Mac) 또는 Ctrl+Shift+E (Windows/Linux)
+  if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'E') {
+    e.preventDefault(); // 기본 동작 방지
+    
+    console.log('');
+    console.log('⌨️⌨️⌨️ 단축키 감지! (Content Script) ⌨️⌨️⌨️');
+    console.log('🔍 맞춤법 검사 시작...');
+    
+    try {
+      const startTime = Date.now();
+    const errorCount = await highlightErrors(document.body);
+    const checkedCount = countKoreanWords(document.body);
+      const duration = Date.now() - startTime;
+      
+      console.log('✅ 맞춤법 검사 완료!');
+      console.log(`📊 발견된 오류: ${errorCount}개`);
+      console.log(`📊 검사한 단어: ${checkedCount}개`);
+      console.log(`⏱️ 소요 시간: ${duration}ms`);
+      console.log('');
+  } catch (error) {
+      console.error('❌ 맞춤법 검사 오류:', error);
+    }
+  }
+});
+
 // 확장 프로그램 로드 확인
 console.log('');
 console.log('🎉 한글 맞춤법 검사기 Content Script 로드 완료!');
 console.log('⌨️  단축키 Cmd+Shift+E를 눌러 선택한 텍스트를 검사하세요!');
+console.log('✅ Content Script에서 직접 단축키 감지 (Service Worker 불필요)');
 console.log('');
 
