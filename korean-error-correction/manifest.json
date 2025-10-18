@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "한글 맞춤법 검사기",
-  "version": "4.3.1",
-  "version_name": "4.3.1 - Content Script 즉시 로딩 (새 탭에서 단축키 바로 작동)",
+  "version": "4.3.2",
+  "version_name": "4.3.2 - Content Script 로딩 재시도 메커니즘 추가",
   "description": "선택한 텍스트를 Gemini AI로 검사하고 자동 교정하는 맞춤법 검사기 (Cmd+Shift+E)",
   "permissions": [
     "activeTab",

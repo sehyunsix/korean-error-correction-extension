@@ -840,6 +840,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     sendResponse({ 
       stats: STATE.lastCheckStats
     });
+  } else if (request.action === 'showError') {
+    console.log('⚠️ [CONTENT] 오류 알림 요청');
+    alert('⚠️ 확장 프로그램이 아직 완전히 로드되지 않았습니다.\n\n페이지를 새로고침(F5)하고 다시 시도해주세요.');
+    sendResponse({ success: true });
   } else {
     console.log('❓ [CONTENT] 알 수 없는 액션:', request.action);
   }

@@ -211,10 +211,35 @@ chrome.commands.onCommand.addListener(async (command) => {
         console.log('='.repeat(80));
       } catch (error) {
         console.error('');
-        console.error('❌❌❌ 메시지 전송 실패! ❌❌❌');
-        console.error('오류:', error);
-        console.error('해결 방법: 웹페이지를 새로고침(F5)하세요!');
-        console.error('='.repeat(80));
+        console.error('⚠️ Content Script 응답 없음 - 재시도 중...');
+        console.error('오류:', error.message);
+        
+        // Content Script가 로드되지 않았을 수 있으므로 재시도
+        try {
+          console.log('🔄 0.5초 후 재시도...');
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          const retryResponse = await chrome.tabs.sendMessage(tab.id, { action: 'checkSpelling' });
+          console.log('✅ 재시도 성공!');
+          console.log('📥 응답:', retryResponse);
+          console.log('='.repeat(80));
+        } catch (retryError) {
+          console.error('❌❌❌ 재시도 실패! ❌❌❌');
+          console.error('오류:', retryError.message);
+          console.error('');
+          console.error('💡 해결 방법:');
+          console.error('   1. 웹페이지를 새로고침(F5)하세요');
+          console.error('   2. chrome://extensions/ 에서 확장 프로그램 새로고침');
+          console.error('   3. 페이지가 완전히 로드될 때까지 기다리세요');
+          console.error('='.repeat(80));
+          
+          // 사용자에게 알림 (선택사항)
+          try {
+            await chrome.tabs.sendMessage(tab.id, { action: 'showError' });
+          } catch (e) {
+            // Content Script가 없으면 무시
+          }
+        }
       }
     } else {
       console.warn('');
