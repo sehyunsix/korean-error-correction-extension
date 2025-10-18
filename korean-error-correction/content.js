@@ -206,16 +206,36 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
 
     replaceBtn.addEventListener('click', () => {
       try {
+        console.log('\n=== 텍스트 수정하기 시작 ===');
+        console.log('📦 selectionInfo:', selectionInfo);
+        console.log('📝 selectionInfo.type:', selectionInfo?.type);
+        console.log('📝 correctedText:', correctedText?.substring(0, 100));
+        
         let success = false;
 
         // Input/Textarea 필드
         if (selectionInfo.type === 'input' && selectionInfo.element) {
+          console.log('🔧 Input/Textarea 대체 시도...');
+          console.log('📝 element:', selectionInfo.element);
+          console.log('📝 start:', selectionInfo.start);
+          console.log('📝 end:', selectionInfo.end);
+          
           const element = selectionInfo.element;
           const start = selectionInfo.start;
           const end = selectionInfo.end;
           
+          // 요소가 여전히 DOM에 있는지 확인
+          if (!document.contains(element)) {
+            console.error('❌ 요소가 DOM에서 제거되었습니다');
+            throw new Error('요소를 찾을 수 없습니다. 페이지를 새로고침하고 다시 시도해주세요.');
+          }
+          
           // 값 대체
+          const originalValue = element.value;
           element.value = element.value.substring(0, start) + correctedText + element.value.substring(end);
+          console.log('✅ 값 대체 완료');
+          console.log(`  원본: "${originalValue.substring(start, end)}"`);
+          console.log(`  대체: "${correctedText}"`);
           
           // 커서 위치 설정 (교정된 텍스트 끝으로)
           const newCursorPos = start + correctedText.length;
@@ -226,14 +246,32 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
           console.log('✅ Input/Textarea 텍스트 대체 성공');
         }
         // iframe 필드
-        else if (selectionInfo.type === 'iframe' && selectionInfo.selection && selectionInfo.iframeWindow) {
+        else if (selectionInfo.type === 'iframe') {
+          console.log('🔧 iframe 대체 시도...');
+          console.log('📝 element:', selectionInfo.element);
+          console.log('📝 selection:', selectionInfo.selection);
+          console.log('📝 iframeWindow:', selectionInfo.iframeWindow);
+          
+          if (!selectionInfo.selection || !selectionInfo.iframeWindow) {
+            console.error('❌ selection 또는 iframeWindow가 없습니다');
+            throw new Error('iframe 정보를 찾을 수 없습니다. 텍스트를 다시 선택해주세요.');
+          }
+          
           const iframeSelection = selectionInfo.selection;
           const iframeDoc = selectionInfo.iframeWindow.document;
           
+          console.log('📝 rangeCount:', iframeSelection.rangeCount);
+          
           if (iframeSelection.rangeCount > 0) {
             const range = iframeSelection.getRangeAt(0);
+            console.log('📝 range:', range);
+            console.log('📝 range.toString():', range.toString());
+            
             range.deleteContents();
+            console.log('✅ 기존 내용 삭제 완료');
+            
             range.insertNode(iframeDoc.createTextNode(correctedText));
+            console.log('✅ 새 텍스트 삽입 완료');
             
             // 선택 해제 및 커서를 끝으로 이동
             iframeSelection.removeAllRanges();
@@ -242,7 +280,15 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
             
             success = true;
             console.log('✅ iframe 텍스트 대체 성공');
+          } else {
+            console.error('❌ rangeCount가 0입니다');
+            throw new Error('선택 범위를 찾을 수 없습니다. 텍스트를 다시 선택해주세요.');
           }
+        } else {
+          console.error('❌ 지원되지 않는 타입 또는 정보 부족');
+          console.error('  type:', selectionInfo?.type);
+          console.error('  element:', selectionInfo?.element);
+          throw new Error('지원되지 않는 요소 타입입니다. 복사 버튼을 이용해주세요.');
         }
 
         if (success) {
@@ -251,16 +297,23 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
           actionStatus.style.color = '#388e3c';
           actionStatus.style.display = 'block';
           
+          console.log('✅✅✅ 텍스트 수정 완료! ✅✅✅\n');
+          
           // 0.5초 후 모달 닫기
           setTimeout(() => {
             modal.remove();
           }, 500);
         } else {
+          console.error('❌ success가 false입니다');
           throw new Error('텍스트 대체 실패');
         }
       } catch (error) {
-        console.error('❌ 텍스트 대체 오류:', error);
-        actionStatus.textContent = '❌ 텍스트 수정 실패. 복사 버튼을 이용해주세요.';
+        console.error('\n❌❌❌ 텍스트 대체 오류 ❌❌❌');
+        console.error('오류 메시지:', error.message);
+        console.error('오류 스택:', error.stack);
+        console.error('');
+        
+        actionStatus.textContent = `❌ ${error.message}`;
         actionStatus.style.background = '#ffebee';
         actionStatus.style.color = '#d32f2f';
         actionStatus.style.display = 'block';
@@ -544,9 +597,9 @@ async function highlightErrors(bodyElement) {
         showCorrectionModal('✅ 오류가 없습니다!', selectedText, selectedText, [], selectionInfo);
         console.log(`✅ ${selectionInfo.type} 필드 - 오류 없음`);
         STATE.lastCheckStats.foundErrors = 0;
-        return 0;
-      }
-      
+  return 0;
+}
+
       // Input/iframe 필드는 교정된 텍스트를 표시
       let correctedText = selectedText;
       for (const error of errors) {
