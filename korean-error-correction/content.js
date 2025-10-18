@@ -855,12 +855,32 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   
   if (request.action === 'checkSpelling') {
     console.log('✅ 맞춤법 검사 액션 확인!');
+    
+    // 🔥 즉시 selection 저장 (우클릭 메뉴용)
+    const windowSelection = window.getSelection();
+    const activeElement = document.activeElement;
+    let savedText = null;
+    let savedRange = null;
+    
+    if (windowSelection && windowSelection.rangeCount > 0) {
+      savedText = windowSelection.toString();
+      try {
+        savedRange = windowSelection.getRangeAt(0).cloneRange();
+      } catch (e) {
+        console.warn('⚠️ Range 복사 실패:', e);
+      }
+    }
+    
+    console.log('💾 우클릭 메뉴 - selection 즉시 저장:', savedText?.substring(0, 50));
     console.log('🚀 검사 시작...');
     
     (async () => {
       try {
         const startTime = Date.now();
-        const errorCount = await highlightErrors(document.body);
+        
+        // 저장된 selection 정보 생성
+        const savedSelectionInfo = getSelectedTextWithPreserved(savedText, savedRange, activeElement);
+        const errorCount = await highlightErrorsWithSavedSelection(document.body, savedSelectionInfo);
         const checkedCount = countKoreanWords(document.body);
         const duration = Date.now() - startTime;
         
