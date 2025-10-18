@@ -180,6 +180,16 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
           transform: translateY(0) scale(1);
         }
       }
+      @keyframes tooltipFadeIn {
+        from {
+          opacity: 0;
+          transform: scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
       
       /* 웹킷 스크롤바 스타일 */
       .modal-scroll-content::-webkit-scrollbar {
@@ -228,12 +238,9 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
   const headerHTML = originalText !== correctedText ? `
     <div style="background: linear-gradient(135deg, #15C39A 0%, #0FA784 100%); padding: 20px 24px; color: white; position: relative;">
       <div style="display: flex; align-items: center; justify-content: space-between;">
-        <div>
-          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-            <h2 style="margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -0.5px;">✨ 맞춤법 교정 완료</h2>
-            <span style="background: rgba(255,255,255,0.25); padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">${elapsedSeconds}초</span>
-          </div>
-          <p style="margin: 0; font-size: 13px; opacity: 0.9;">검사가 완료되었습니다</p>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <h2 style="margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -0.5px;">✨ 맞춤법 교정 완료</h2>
+          <span style="background: rgba(255,255,255,0.25); padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">${elapsedSeconds}초</span>
         </div>
         <button id="close-modal-header" style="
           background: rgba(255, 255, 255, 0.2);
@@ -259,11 +266,10 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
         <div style="display: flex; align-items: center; gap: 12px;">
           <div style="width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px;">✓</div>
           <div>
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 2px;">
-              <h2 style="margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -0.5px;">완벽합니다!</h2>
+            <h2 style="margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px;">
+              완벽합니다!
               <span style="background: rgba(255,255,255,0.25); padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">${elapsedSeconds}초</span>
-            </div>
-            <p style="margin: 0; font-size: 13px; opacity: 0.9;">오류가 발견되지 않았습니다</p>
+            </h2>
           </div>
         </div>
         <button id="close-modal-header" style="
@@ -286,6 +292,31 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
     </div>
   `;
   
+  // 교정된 텍스트에 하이라이트와 툴팁 추가
+  let highlightedCorrectedText = correctedText;
+  if (errors.length > 0) {
+    // 오류를 위치 순서대로 정렬 (뒤에서부터 처리하기 위해)
+    const sortedErrors = [...errors].sort((a, b) => {
+      const indexA = correctedText.indexOf(a.suggestions[0]);
+      const indexB = correctedText.indexOf(b.suggestions[0]);
+      return indexB - indexA; // 역순 정렬
+    });
+
+    // 뒤에서부터 대체하여 인덱스가 틀어지지 않도록 함
+    for (const error of sortedErrors) {
+      const correctedWord = error.suggestions[0];
+      const tokenIndex = highlightedCorrectedText.lastIndexOf(correctedWord);
+      if (tokenIndex !== -1) {
+        const before = highlightedCorrectedText.substring(0, tokenIndex);
+        const after = highlightedCorrectedText.substring(tokenIndex + correctedWord.length);
+        const infoText = error.info || '맞춤법 오류';
+        highlightedCorrectedText = before + 
+          `<span class="corrected-word-tooltip" style="background: #bbf7d0; padding: 2px 4px; border-radius: 3px; color: #065f46; font-weight: 600; cursor: help; position: relative;" data-original="${error.token}" data-info="${infoText.replace(/"/g, '&quot;')}">${correctedWord}</span>` +
+          after;
+      }
+    }
+  }
+
   // 텍스트 비교 HTML (2단 레이아웃 - 네이버 스타일)
   const comparisonHTML = originalText !== correctedText ? `
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #e5e7eb; padding: 0;">
@@ -305,7 +336,7 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
           <div style="font-size: 11px; color: #15C39A; font-weight: 600; background: #d1fae5; padding: 2px 8px; border-radius: 12px;">${errors.length}개 수정</div>
           <div style="font-size: 11px; color: #9ca3af; font-weight: 500;">${correctedText.length}자</div>
         </div>
-        <div style="padding: 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; line-height: 1.8; white-space: pre-wrap; word-break: break-word; font-size: 14px; color: #1f2937; min-height: 120px;">${correctedText}</div>
+        <div id="corrected-text-container" style="padding: 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; line-height: 1.8; white-space: pre-wrap; word-break: break-word; font-size: 14px; color: #1f2937; min-height: 120px;">${highlightedCorrectedText}</div>
       </div>
     </div>
   ` : `
@@ -420,6 +451,87 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
       modal.remove();
     });
   }
+
+  // 교정된 단어에 툴팁 이벤트 추가
+  const correctedWords = modalContent.querySelectorAll('.corrected-word-tooltip');
+  correctedWords.forEach(word => {
+    let tooltipElement = null;
+    
+    word.addEventListener('mouseenter', (e) => {
+      const original = word.getAttribute('data-original');
+      const info = word.getAttribute('data-info');
+      const corrected = word.textContent;
+      
+      // 툴팁 생성
+      tooltipElement = document.createElement('div');
+      tooltipElement.style.cssText = `
+        position: fixed;
+        background: white;
+        padding: 0;
+        border-radius: 12px;
+        font-size: 13px;
+        width: 280px;
+        z-index: 1000000;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+        pointer-events: none;
+        animation: tooltipFadeIn 0.2s ease;
+      `;
+      
+      tooltipElement.innerHTML = `
+        <div style="background: #d1fae5; padding: 12px 14px; border-radius: 12px 12px 0 0; border-bottom: 1px solid #a7f3d0;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 20px; height: 20px; background: #15C39A; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0;">✓</div>
+            <div style="font-weight: 700; color: #065f46; font-size: 14px;">교정 완료</div>
+          </div>
+        </div>
+        <div style="padding: 14px; background: white; border-radius: 0 0 12px 12px;">
+          <div style="margin-bottom: 10px;">
+            <div style="color: #6b7280; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">원본</div>
+            <div style="color: #991b1b; font-size: 13px; font-weight: 600; padding: 6px 10px; background: #fee2e2; border-radius: 4px; border: 1px solid #fecaca; text-decoration: line-through;">
+              ${original}
+            </div>
+          </div>
+          <div style="margin-bottom: 10px;">
+            <div style="color: #6b7280; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">수정</div>
+            <div style="color: #065f46; font-size: 13px; font-weight: 600; padding: 6px 10px; background: #d1fae5; border-radius: 4px; border: 1px solid #a7f3d0;">
+              ${corrected}
+            </div>
+          </div>
+          <div style="color: #6b7280; font-size: 12px; line-height: 1.5; padding: 8px; background: #f9fafb; border-radius: 4px; border-left: 3px solid #15C39A;">
+            ${info}
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(tooltipElement);
+      
+      // 툴팁 위치 계산
+      const rect = word.getBoundingClientRect();
+      const tooltipRect = tooltipElement.getBoundingClientRect();
+      
+      // 오른쪽에 공간이 있으면 오른쪽, 없으면 왼쪽
+      let left = rect.right + 10;
+      if (left + tooltipRect.width > window.innerWidth) {
+        left = rect.left - tooltipRect.width - 10;
+      }
+      
+      // 위치 조정 (화면 밖으로 나가지 않도록)
+      let top = rect.top;
+      if (top + tooltipRect.height > window.innerHeight) {
+        top = window.innerHeight - tooltipRect.height - 10;
+      }
+      
+      tooltipElement.style.left = left + 'px';
+      tooltipElement.style.top = top + 'px';
+    });
+    
+    word.addEventListener('mouseleave', () => {
+      if (tooltipElement) {
+        tooltipElement.remove();
+        tooltipElement = null;
+      }
+    });
+  });
 
   // 수정하기 버튼 (selectionInfo가 있을 때만)
   if (replaceBtn && selectionInfo) {
