@@ -40,41 +40,45 @@ function showLoadingModal() {
   const loadingContent = document.createElement('div');
   loadingContent.style.cssText = `
     background: white;
-    border-radius: 12px;
-    padding: 40px;
+    border-radius: 16px;
+    padding: 48px 40px;
     text-align: center;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    min-width: 280px;
   `;
 
   loadingContent.innerHTML = `
-    <div style="font-size: 48px; margin-bottom: 20px;">
-      <div class="spinner" style="
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #2196f3;
+    <div style="margin-bottom: 24px;">
+      <div class="spinner-grammarly" style="
+        border: 3px solid #d1fae5;
+        border-top: 3px solid #15C39A;
         border-radius: 50%;
-        width: 50px;
-        height: 50px;
-        animation: spin 1s linear infinite;
+        width: 56px;
+        height: 56px;
+        animation: spin 0.8s cubic-bezier(0.5, 0, 0.5, 1) infinite;
         margin: 0 auto;
       "></div>
     </div>
-    <div style="font-size: 18px; font-weight: 600; color: #333; margin-bottom: 8px;">
-      🤖 AI가 검사 중입니다...
+    <div style="font-size: 18px; font-weight: 600; color: #1f2937; margin-bottom: 8px; letter-spacing: -0.3px;">
+      AI가 검사 중입니다
     </div>
-    <div style="font-size: 14px; color: #666;">
-      잠시만 기다려주세요
+    <div style="font-size: 14px; color: #6b7280; font-weight: 500;">
+      잠시만 기다려주세요...
     </div>
   `;
 
-  // 스피너 애니메이션 추가
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  `;
-  document.head.appendChild(style);
+  // 스피너 애니메이션 추가 (Grammarly 스타일)
+  if (!document.getElementById('spinner-animation-style')) {
+    const style = document.createElement('style');
+    style.id = 'spinner-animation-style';
+    style.textContent = `
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
 
   modal.appendChild(loadingContent);
   document.body.appendChild(modal);
