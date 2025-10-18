@@ -15,6 +15,19 @@
  * 교정 결과를 표시하는 모달 생성
  */
 function showCorrectionModal(title, originalText, correctedText, errors, selectionInfo = null) {
+  // iframe의 경우 Range를 미리 저장 (모달이 열리면 selection이 해제되므로)
+  let savedRange = null;
+  if (selectionInfo && selectionInfo.type === 'iframe' && selectionInfo.selection) {
+    try {
+      if (selectionInfo.selection.rangeCount > 0) {
+        savedRange = selectionInfo.selection.getRangeAt(0).cloneRange();
+        console.log('💾 Range 저장 완료:', savedRange.toString());
+      }
+    } catch (e) {
+      console.warn('⚠️ Range 저장 실패:', e);
+    }
+  }
+  
   // 기존 모달 제거
   const existingModal = document.getElementById('spelling-correction-modal');
   if (existingModal) {
@@ -249,40 +262,42 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
         else if (selectionInfo.type === 'iframe') {
           console.log('🔧 iframe 대체 시도...');
           console.log('📝 element:', selectionInfo.element);
-          console.log('📝 selection:', selectionInfo.selection);
           console.log('📝 iframeWindow:', selectionInfo.iframeWindow);
+          console.log('📝 savedRange:', savedRange);
           
-          if (!selectionInfo.selection || !selectionInfo.iframeWindow) {
-            console.error('❌ selection 또는 iframeWindow가 없습니다');
-            throw new Error('iframe 정보를 찾을 수 없습니다. 텍스트를 다시 선택해주세요.');
+          if (!selectionInfo.iframeWindow) {
+            console.error('❌ iframeWindow가 없습니다');
+            throw new Error('iframe 정보를 찾을 수 없습니다.');
           }
           
-          const iframeSelection = selectionInfo.selection;
+          if (!savedRange) {
+            console.error('❌ 저장된 Range가 없습니다');
+            throw new Error('선택 범위가 저장되지 않았습니다. 텍스트를 다시 선택해주세요.');
+          }
+          
           const iframeDoc = selectionInfo.iframeWindow.document;
+          const iframeSelection = selectionInfo.iframeWindow.getSelection();
           
-          console.log('📝 rangeCount:', iframeSelection.rangeCount);
+          console.log('📝 savedRange.toString():', savedRange.toString());
           
-          if (iframeSelection.rangeCount > 0) {
-            const range = iframeSelection.getRangeAt(0);
-            console.log('📝 range:', range);
-            console.log('📝 range.toString():', range.toString());
-            
-            range.deleteContents();
+          try {
+            // 저장된 Range 사용
+            savedRange.deleteContents();
             console.log('✅ 기존 내용 삭제 완료');
             
-            range.insertNode(iframeDoc.createTextNode(correctedText));
+            savedRange.insertNode(iframeDoc.createTextNode(correctedText));
             console.log('✅ 새 텍스트 삽입 완료');
             
             // 선택 해제 및 커서를 끝으로 이동
             iframeSelection.removeAllRanges();
-            range.collapse(false);
-            iframeSelection.addRange(range);
+            savedRange.collapse(false);
+            iframeSelection.addRange(savedRange);
             
             success = true;
             console.log('✅ iframe 텍스트 대체 성공');
-          } else {
-            console.error('❌ rangeCount가 0입니다');
-            throw new Error('선택 범위를 찾을 수 없습니다. 텍스트를 다시 선택해주세요.');
+          } catch (rangeError) {
+            console.error('❌ Range 조작 오류:', rangeError);
+            throw new Error('텍스트 대체 중 오류가 발생했습니다. 페이지를 새로고침하고 다시 시도해주세요.');
           }
         } else {
           console.error('❌ 지원되지 않는 타입 또는 정보 부족');
