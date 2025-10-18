@@ -675,17 +675,13 @@ function getSelectedText() {
 }
 
 /**
- * 선택된 텍스트에 API 기반 하이라이트 적용
+ * 선택된 텍스트에 API 기반 하이라이트 적용 (저장된 선택 정보 사용)
  */
-async function highlightErrors(bodyElement) {
-  console.log('\n=== 선택된 텍스트 맞춤법 검사 시작 ===');
+async function highlightErrorsWithSavedSelection(bodyElement, savedSelectionInfo) {
+  console.log('\n=== 선택된 텍스트 맞춤법 검사 시작 (저장된 선택 사용) ===');
+  console.log('📦 savedSelectionInfo:', savedSelectionInfo);
   
-  // 선택된 텍스트 가져오기
-  console.log('🔍 getSelectedText() 호출...');
-  const selectionInfo = getSelectedText();
-  console.log('📦 selectionInfo:', selectionInfo);
-  
-  if (!selectionInfo || !selectionInfo.text) {
+  if (!savedSelectionInfo || !savedSelectionInfo.text) {
     console.warn('⚠️ 선택된 텍스트 없음!');
     console.log('activeElement:', document.activeElement);
     console.log('activeElement.tagName:', document.activeElement?.tagName);
@@ -695,10 +691,10 @@ async function highlightErrors(bodyElement) {
     return 0;
   }
 
-  const selectedText = selectionInfo.text;
-  console.log(`✅ 선택된 텍스트 (${selectionInfo.type}): "${selectedText.substring(0, 100)}..."`);
+  const selectedText = savedSelectionInfo.text;
+  console.log(`✅ 선택된 텍스트 (${savedSelectionInfo.type}): "${selectedText.substring(0, 100)}..."`);
 
-// 하이라이트 제거
+  // 하이라이트 제거
   clearHighlights();
 
   try {
@@ -742,8 +738,8 @@ async function highlightErrors(bodyElement) {
 
     // 모든 경우에 모달 표시 (Google Docs, Sheets, 일반 HTML 모두 포함)
     if (errors.length === 0) {
-      showCorrectionModal('✅ 오류가 없습니다!', selectedText, selectedText, [], selectionInfo);
-      console.log(`✅ ${selectionInfo.type} - 오류 없음`);
+      showCorrectionModal('✅ 오류가 없습니다!', selectedText, selectedText, [], savedSelectionInfo);
+      console.log(`✅ ${savedSelectionInfo.type} - 오류 없음`);
       STATE.lastCheckStats.foundErrors = 0;
       return 0;
     }
@@ -753,10 +749,10 @@ async function highlightErrors(bodyElement) {
       selectedText,
       correctedText,
       errors,
-      selectionInfo
+      savedSelectionInfo
     );
     
-    console.log(`🔴 ${selectionInfo.type} - ${errors.length}개의 오류 발견`);
+    console.log(`🔴 ${savedSelectionInfo.type} - ${errors.length}개의 오류 발견`);
     STATE.lastCheckStats.foundErrors = errors.length;
     return errors.length;
 
@@ -869,9 +865,13 @@ async function handleShortcut(e) {
   const isModifiers = (e.metaKey || e.ctrlKey) && e.shiftKey && !e.altKey;
   
   if (isEKey && isModifiers) {
-    console.log('🎯 Cmd+Shift+E 조합 감지! 이벤트 차단 시작...');
+    console.log('🎯 Cmd+Shift+E 조합 감지!');
     
-    // 즉시 이벤트 차단 (최우선)
+    // 🔥 즉시 선택 정보 저장 (포커스 변경 전에!)
+    const savedSelectionInfo = getSelectedText();
+    console.log('💾 선택 정보 저장:', savedSelectionInfo);
+    
+    // 이벤트 차단 (최우선)
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
@@ -882,7 +882,7 @@ async function handleShortcut(e) {
     
     try {
       const startTime = Date.now();
-      const errorCount = await highlightErrors(document.body);
+      const errorCount = await highlightErrorsWithSavedSelection(document.body, savedSelectionInfo);
       const checkedCount = countKoreanWords(document.body);
       const duration = Date.now() - startTime;
       
