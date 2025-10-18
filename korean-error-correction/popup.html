@@ -5,264 +5,395 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>한글 맞춤법 검사기</title>
   <style>
+  * {
+    box-sizing: border-box;
+  }
+
   body {
-    width: 360px;
-    padding: 20px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
+    width: 380px;
     margin: 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+    background: #f5f7fa;
+    color: #1f2937;
   }
     
     .container {
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 12px;
-      padding: 20px;
-      color: #333;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      background: #ffffff;
+      padding: 0;
+      color: #1f2937;
+    }
+    
+    /* Header Section */
+    .header {
+      background: linear-gradient(135deg, #15C39A 0%, #0FA784 100%);
+      padding: 24px 20px;
+      text-align: center;
+      color: white;
+      box-shadow: 0 2px 8px rgba(21, 195, 154, 0.15);
     }
     
     h1 {
-      margin: 0 0 10px 0;
-      font-size: 20px;
-      color: #667eea;
-      text-align: center;
+      margin: 0 0 8px 0;
+      font-size: 22px;
+      font-weight: 700;
+      color: white;
+      letter-spacing: -0.5px;
     }
     
-    p {
-      margin: 0 0 20px 0;
+    .subtitle {
       font-size: 13px;
-      color: #666;
-      text-align: center;
-      line-height: 1.5;
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 400;
+      margin: 0;
     }
     
+    /* Content Sections */
+    .section {
+      padding: 20px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .section:last-child {
+      border-bottom: none;
+    }
+    
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1f2937;
+      margin: 0 0 12px 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    /* How to Use Card */
+    .how-to-use {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+    
+    .how-to-use p {
+      margin: 0;
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1.6;
+    }
+    
+    .kbd {
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 11px;
+      color: #374151;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Buttons */
     button {
       width: 100%;
-      padding: 12px;
-      font-size: 15px;
+      padding: 12px 16px;
+      font-size: 14px;
       font-weight: 600;
       border: none;
       border-radius: 8px;
       cursor: pointer;
-      transition: all 0.3s ease;
-      margin-bottom: 10px;
+      transition: all 0.2s ease;
+      margin-bottom: 8px;
+      font-family: inherit;
     }
     
     #checkBtn {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #15C39A;
       color: white;
+      box-shadow: 0 2px 4px rgba(21, 195, 154, 0.2);
     }
     
     #checkBtn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      background: #13B389;
+      box-shadow: 0 4px 8px rgba(21, 195, 154, 0.3);
+      transform: translateY(-1px);
+    }
+    
+    #checkBtn:active {
+      transform: translateY(0);
     }
     
     #clearBtn {
-      background: #f5f5f5;
-      color: #666;
+      background: #f3f4f6;
+      color: #6b7280;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
     
     #clearBtn:hover {
-      background: #e0e0e0;
+      background: #e5e7eb;
+      color: #374151;
     }
     
+    /* Status Messages */
     #status {
-      margin-top: 15px;
-      padding: 10px;
-      border-radius: 6px;
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 8px;
       font-size: 13px;
       text-align: center;
       display: none;
+      font-weight: 500;
+      animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
     
     #status.success {
-      background: #e8f5e9;
-      color: #2e7d32;
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
       display: block;
     }
     
     #status.error {
-      background: #ffebee;
-      color: #c62828;
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
       display: block;
     }
     
     #status.info {
-      background: #e3f2fd;
-      color: #1565c0;
+      background: #dbeafe;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
       display: block;
     }
     
+    /* Stats Cards */
     .stats {
-      display: flex;
-      justify-content: space-around;
-      margin-top: 15px;
-      padding-top: 15px;
-      border-top: 1px solid #e0e0e0;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 16px;
     }
     
     .stat-item {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 12px;
       text-align: center;
+      transition: all 0.2s ease;
+    }
+    
+    .stat-item:hover {
+      background: #f3f4f6;
+      border-color: #15C39A;
     }
     
     .stat-number {
       font-size: 24px;
-      font-weight: bold;
-      color: #667eea;
+      font-weight: 700;
+      color: #15C39A;
+      line-height: 1;
+      margin-bottom: 4px;
     }
     
     .stat-label {
       font-size: 11px;
-      color: #999;
-      margin-top: 4px;
+      color: #6b7280;
+      font-weight: 500;
+    }
+    
+    /* Input Fields */
+    input[type="password"],
+    input[type="text"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      background: #ffffff;
+    }
+    
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #15C39A;
+      box-shadow: 0 0 0 3px rgba(21, 195, 154, 0.1);
+    }
+    
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 6px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🔍 한글 맞춤법 검사기</h1>
-    <p style="line-height: 1.6;">
-      <strong>📌 사용 방법:</strong><br>
-      1️⃣ 검사할 텍스트를 드래그로 선택<br>
-      2️⃣ 단축키 <kbd style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-family: monospace;">Cmd+Shift+E</kbd> 또는 버튼 클릭<br>
-      3️⃣ <span style="color: #f44336;">빨간색</span>은 오류 (마우스 오버로 확인), <span style="color: #4caf50;">초록색</span>은 정상
-    </p>
+    <!-- Header -->
+    <div class="header">
+      <h1>✨ 한글 맞춤법 검사기</h1>
+      <p class="subtitle">AI 기반 스마트 교정 도우미</p>
+    </div>
     
-    <button id="checkBtn">선택한 텍스트 검사</button>
-    <button id="clearBtn">표시 지우기</button>
-    
-    <!-- Gemini API 설정 -->
-    <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #667eea;">
-      <div style="font-size: 14px; font-weight: 600; color: #667eea; margin-bottom: 10px; text-align: center;">
-        🤖 Gemini API 설정
+    <!-- Quick Actions Section -->
+    <div class="section">
+      <div class="how-to-use">
+        <p>
+          <strong style="color: #15C39A;">💡 사용 방법</strong><br>
+          • 텍스트를 선택하고 <span class="kbd">Cmd+Shift+E</span> 누르기<br>
+          • <span style="color: #ef4444;">빨간 밑줄</span>은 오류, <span style="color: #15C39A;">초록 밑줄</span>은 수정됨
+        </p>
       </div>
-      <div style="margin-bottom: 10px;">
-        <label style="display: block; font-size: 12px; color: #666; margin-bottom: 5px;">
-          API Key (선택사항 - 입력 시 Gemini 사용):
-        </label>
-        <div style="display: flex; gap: 5px;">
+      
+      <button id="checkBtn">🔍 선택한 텍스트 검사하기</button>
+      <button id="clearBtn">🧹 하이라이트 지우기</button>
+      
+      <div id="status"></div>
+      
+      <div class="stats" id="stats" style="display: none;">
+        <div class="stat-item">
+          <div class="stat-number" id="errorCount">0</div>
+          <div class="stat-label">발견 오류</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" id="checkedCount">0</div>
+          <div class="stat-label">검사 단어</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" id="checkMethod" style="font-size: 16px;">-</div>
+          <div class="stat-label">검사 방식</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Gemini API Settings Section -->
+    <div class="section">
+      <div class="section-title">🤖 AI 엔진 설정</div>
+      <div style="margin-bottom: 12px;">
+        <label>Gemini API Key (선택사항)</label>
+        <div style="display: flex; gap: 8px;">
           <input type="password" id="geminiApiKey" 
-            placeholder="Gemini API Key 입력" 
-            style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
-          <button id="saveApiKey" style="padding: 8px 12px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap;">
+            placeholder="API Key 입력">
+          <button id="saveApiKey" style="width: auto; padding: 10px 16px; white-space: nowrap; background: #15C39A; color: white;">
             저장
           </button>
         </div>
       </div>
       
       <!-- 모델 선택 -->
-      <div id="modelSelectContainer" style="margin-top: 10px; display: none;">
-        <label style="display: block; font-size: 12px; color: #666; margin-bottom: 5px;">
-          사용할 모델 선택:
-        </label>
-        <div style="display: flex; gap: 5px; align-items: center;">
-          <select id="geminiModel" 
-            style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; background: white;">
+      <div id="modelSelectContainer" style="display: none;">
+        <label>AI 모델 선택</label>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <select id="geminiModel">
             <option value="">모델 선택...</option>
           </select>
-          <button id="refreshModels" style="padding: 8px 12px; background: #4caf50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap;" title="모델 목록 새로고침">
+          <button id="refreshModels" style="width: auto; padding: 10px 16px; background: #15C39A; color: white;" title="모델 목록 새로고침">
             🔄
           </button>
         </div>
-        <div style="font-size: 11px; color: #999; margin-top: 5px;" id="modelInfo">
+        <div style="font-size: 11px; color: #6b7280; margin-top: 6px; background: #f9fafb; padding: 8px; border-radius: 6px;" id="modelInfo">
           API Key를 입력하면 사용 가능한 모델 목록이 표시됩니다.
         </div>
       </div>
     </div>
     
-    <!-- API 테스트 영역 -->
-    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
-      <div style="font-size: 14px; font-weight: 600; color: #667eea; margin-bottom: 10px; text-align: center;">
-        🧪 AI 교정 테스트
-      </div>
+    <!-- AI 교정 테스트 Section -->
+    <div class="section">
+      <div class="section-title">🧪 빠른 테스트</div>
       <textarea id="testInput" 
         placeholder="테스트할 텍스트를 입력하세요&#10;예: 아늬 진짜 무ㅓ하냐고" 
-        style="width: 100%; min-height: 60px; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; resize: vertical; font-family: inherit; box-sizing: border-box;"></textarea>
-      <button id="testBtn" style="width: 100%; margin-top: 10px; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;">
-        교정하기
+        style="min-height: 80px; resize: vertical; margin-bottom: 8px;"></textarea>
+      <button id="testBtn" style="background: #15C39A; color: white;">
+        ✨ 교정하기
       </button>
-      <div id="testResult" style="display: none; margin-top: 10px; padding: 12px; background: #f8f9fa; border-radius: 6px; font-size: 13px; line-height: 1.6;">
+      <div id="testResult" style="display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; line-height: 1.6;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-          <span style="font-weight: 600; color: #2e7d32;">✅ 교정 결과:</span>
-          <button id="copyBtn" style="padding: 4px 12px; background: #4caf50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">복사</button>
+          <span style="font-weight: 600; color: #065f46;">✅ 교정 결과</span>
+          <button id="copyBtn" style="width: auto; padding: 6px 12px; background: #15C39A; color: white; font-size: 12px; margin: 0;">복사</button>
         </div>
-        <div id="resultText" style="padding: 8px; background: white; border-radius: 4px; white-space: pre-wrap; word-break: break-word;"></div>
-        <div id="testTime" style="margin-top: 8px; font-size: 11px; color: #999; text-align: right;"></div>
+        <div id="resultText" style="padding: 12px; background: white; border-radius: 6px; white-space: pre-wrap; word-break: break-word; color: #1f2937;"></div>
+        <div id="testTime" style="margin-top: 8px; font-size: 11px; color: #6b7280; text-align: right;"></div>
       </div>
     </div>
     
-    <!-- API 상태 표시 -->
-    <div id="apiStatus" style="margin-top: 15px; padding: 12px; border-radius: 8px; font-size: 12px; display: none;">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-        <span style="font-weight: 600;">검사 방식:</span>
-        <span id="apiMode" style="font-weight: bold;"></span>
-      </div>
-      <div id="apiServerStatus" style="display: flex; align-items: center; justify-content: space-between;">
-        <span>서버 상태:</span>
-        <span id="serverStatusText"></span>
-      </div>
-    </div>
-    
-    
-    <div id="status"></div>
-    
-    <div class="stats" id="stats" style="display: none;">
-      <div class="stat-item">
-        <div class="stat-number" id="errorCount">0</div>
-        <div class="stat-label">발견된 오류</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-number" id="checkedCount">0</div>
-        <div class="stat-label">검사한 단어</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-number" id="checkMethod" style="font-size: 16px;">-</div>
-        <div class="stat-label">검사 방식</div>
+    <!-- API Status Section -->
+    <div class="section" id="apiStatusSection" style="display: none;">
+      <div class="section-title">⚙️ 엔진 상태</div>
+      <div id="apiStatus" style="padding: 12px; border-radius: 8px; font-size: 13px; border: 1px solid #e5e7eb;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+          <span style="font-weight: 500; color: #6b7280;">검사 방식</span>
+          <span id="apiMode" style="font-weight: 600;"></span>
+        </div>
+        <div id="apiServerStatus" style="display: flex; align-items: center; justify-content: space-between;">
+          <span style="font-weight: 500; color: #6b7280;">서버 상태</span>
+          <span id="serverStatusText"></span>
+        </div>
       </div>
     </div>
     
-    <!-- 검사 통계 표시 영역 -->
-    <div id="apiStats" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid #e0e0e0;">
-      <div style="font-size: 13px; font-weight: 600; color: #667eea; margin-bottom: 10px;">📊 검사 결과</div>
+    <!-- 검사 통계 Section -->
+    <div class="section" id="apiStats" style="display: none;">
+      <div class="section-title">📊 최근 검사 결과</div>
       
       <!-- 선택된 텍스트 표시 -->
-      <div id="selectedTextDisplay" style="background: #f8f9fa; padding: 10px; border-radius: 6px; margin-bottom: 10px; font-size: 12px;">
-        <div style="color: #999; font-size: 10px; margin-bottom: 5px;">선택된 텍스트:</div>
-        <div style="color: #333; font-weight: 500; line-height: 1.5;" id="statSelectedText">-</div>
+      <div id="selectedTextDisplay" style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-size: 12px;">
+        <div style="color: #6b7280; font-size: 10px; margin-bottom: 6px; font-weight: 600;">선택된 텍스트</div>
+        <div style="color: #1f2937; font-weight: 500; line-height: 1.5;" id="statSelectedText">-</div>
       </div>
       
-      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 12px; margin-bottom: 8px;">
-        <div style="background: #e3f2fd; padding: 8px; border-radius: 6px;">
-          <div style="color: #1976d2; font-size: 10px;">텍스트 길이</div>
-          <div style="color: #1976d2; font-weight: 600;" id="statTextLength">-</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 12px;">
+        <div style="background: #dbeafe; border: 1px solid #93c5fd; padding: 10px; border-radius: 8px;">
+          <div style="color: #1e3a8a; font-size: 10px; font-weight: 600;">텍스트 길이</div>
+          <div style="color: #1e3a8a; font-weight: 700; font-size: 16px; margin-top: 4px;" id="statTextLength">-</div>
         </div>
-        <div style="background: #ffebee; padding: 8px; border-radius: 6px;">
-          <div style="color: #c62828; font-size: 10px;">발견 오류</div>
-          <div style="color: #c62828; font-weight: 600;" id="statFoundErrors">-</div>
+        <div style="background: #fee2e2; border: 1px solid #fca5a5; padding: 10px; border-radius: 8px;">
+          <div style="color: #7f1d1d; font-size: 10px; font-weight: 600;">발견 오류</div>
+          <div style="color: #7f1d1d; font-weight: 700; font-size: 16px; margin-top: 4px;" id="statFoundErrors">-</div>
         </div>
-        <div style="background: #e8f5e9; padding: 8px; border-radius: 6px;">
-          <div style="color: #2e7d32; font-size: 10px;">API 상태</div>
-          <div style="color: #2e7d32; font-weight: 600;" id="statApiStatus">-</div>
+        <div style="background: #d1fae5; border: 1px solid #a7f3d0; padding: 10px; border-radius: 8px;">
+          <div style="color: #064e3b; font-size: 10px; font-weight: 600;">API 상태</div>
+          <div style="color: #064e3b; font-weight: 700; font-size: 16px; margin-top: 4px;" id="statApiStatus">-</div>
         </div>
       </div>
     </div>
     
-    <!-- 서버 로그 표시 영역 -->
-    <div id="serverLogs" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid #e0e0e0;">
+    <!-- 서버 로그 Section -->
+    <div class="section" id="serverLogs" style="display: none;">
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-        <span style="font-size: 13px; font-weight: 600; color: #667eea;">📋 서버 로그</span>
-        <button id="toggleLogs" style="background: none; border: none; cursor: pointer; font-size: 12px; color: #667eea; padding: 4px 8px;">접기</button>
+        <div class="section-title" style="margin: 0;">📋 서버 로그</div>
+        <button id="toggleLogs" style="background: none; border: none; cursor: pointer; font-size: 12px; color: #15C39A; padding: 4px 8px; font-weight: 600; width: auto; margin: 0;">접기</button>
       </div>
-      <div id="logsContainer" style="max-height: 200px; overflow-y: auto; background: #f8f9fa; border-radius: 6px; padding: 10px; font-size: 11px; line-height: 1.6;">
+      <div id="logsContainer" style="max-height: 200px; overflow-y: auto; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; font-size: 11px; line-height: 1.6;">
         <!-- 로그가 여기에 표시됩니다 -->
       </div>
     </div>
     
-    <!-- 버전 정보 -->
-    <div style="text-align: center; margin-top: 15px; padding-top: 15px; border-top: 1px solid #e0e0e0;">
-      <span id="versionInfo" style="font-size: 11px; color: #999;">v1.1.0</span>
+    <!-- Version Footer -->
+    <div style="text-align: center; padding: 16px; background: #f9fafb; border-top: 1px solid #e5e7eb;">
+      <span id="versionInfo" style="font-size: 11px; color: #9ca3af; font-weight: 500;">v1.1.0</span>
+      <div style="margin-top: 4px; font-size: 10px; color: #d1d5db;">
+        Made with 💚 by Your Team
+      </div>
     </div>
   </div>
   

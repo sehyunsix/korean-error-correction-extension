@@ -125,25 +125,48 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(4px);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 999999;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+    animation: modalFadeIn 0.2s ease;
   `;
 
   // 모달 내용
   const modalContent = document.createElement('div');
   modalContent.style.cssText = `
     background: white;
-    border-radius: 12px;
-    padding: 24px;
-    max-width: 600px;
-    max-height: 80vh;
-    overflow-y: auto;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    border-radius: 16px;
+    padding: 0;
+    max-width: 640px;
+    max-height: 85vh;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    animation: modalSlideIn 0.3s ease;
   `;
+  
+  // 애니메이션 스타일 추가
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes modalFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+  `;
+  document.head.appendChild(style);
 
   // 수정 전 텍스트에 오류 하이라이트 적용
   let highlightedOriginalText = originalText;
@@ -169,22 +192,56 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
     }
   }
 
+  // 모달 헤더
+  const headerHTML = originalText !== correctedText ? `
+    <div style="background: linear-gradient(135deg, #15C39A 0%, #0FA784 100%); padding: 24px; color: white;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+        <h2 style="margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.5px;">✨ 맞춤법 교정 완료</h2>
+        <div style="background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600;">
+          ${errors.length}개 수정
+        </div>
+      </div>
+      <p style="margin: 0; font-size: 14px; opacity: 0.95;">검사가 완료되었습니다. 변경사항을 확인해주세요.</p>
+    </div>
+  ` : `
+    <div style="background: linear-gradient(135deg, #15C39A 0%, #0FA784 100%); padding: 24px; color: white;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+        <div style="width: 48px; height: 48px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px;">
+          ✓
+        </div>
+        <div>
+          <h2 style="margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.5px;">완벽합니다!</h2>
+          <p style="margin: 4px 0 0 0; font-size: 14px; opacity: 0.95;">오류가 발견되지 않았습니다</p>
+        </div>
+      </div>
+    </div>
+  `;
+  
   // 텍스트 비교 HTML
   const comparisonHTML = originalText !== correctedText ? `
-    <div style="margin: 16px 0;">
-      <div style="margin-bottom: 12px;">
-        <div style="font-weight: 600; color: #d32f2f; margin-bottom: 6px;">❌ 수정 전:</div>
-        <div style="padding: 12px; background: #ffebee; border-radius: 8px; line-height: 1.8; white-space: pre-wrap; word-break: break-word;">${highlightedOriginalText}</div>
+    <div style="padding: 24px; max-height: 50vh; overflow-y: auto;">
+      <div style="margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+          <div style="width: 4px; height: 20px; background: #ef4444; border-radius: 2px;"></div>
+          <div style="font-weight: 600; color: #1f2937; font-size: 14px;">수정 전</div>
+        </div>
+        <div style="padding: 16px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; line-height: 1.8; white-space: pre-wrap; word-break: break-word; font-size: 14px; color: #1f2937;">${highlightedOriginalText}</div>
       </div>
       <div>
-        <div style="font-weight: 600; color: #388e3c; margin-bottom: 6px;">✅ 수정 후:</div>
-        <div style="padding: 12px; background: #e8f5e9; border-radius: 8px; line-height: 1.6; white-space: pre-wrap; word-break: break-word;">${correctedText}</div>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+          <div style="width: 4px; height: 20px; background: #15C39A; border-radius: 2px;"></div>
+          <div style="font-weight: 600; color: #1f2937; font-size: 14px;">수정 후</div>
+        </div>
+        <div style="padding: 16px; background: #d1fae5; border: 1px solid #a7f3d0; border-radius: 10px; line-height: 1.8; white-space: pre-wrap; word-break: break-word; font-size: 14px; color: #1f2937;">${correctedText}</div>
       </div>
     </div>
   ` : `
-    <div style="margin: 16px 0; padding: 12px; background: #e8f5e9; border-radius: 8px;">
-      <div style="font-weight: 600; color: #388e3c; margin-bottom: 6px;">✅ 원본 텍스트:</div>
-      <div style="line-height: 1.6; white-space: pre-wrap; word-break: break-word;">${originalText}</div>
+    <div style="padding: 24px;">
+      <div style="padding: 20px; background: #d1fae5; border: 1px solid #a7f3d0; border-radius: 10px; text-align: center;">
+        <div style="font-size: 48px; margin-bottom: 12px;">🎉</div>
+        <div style="font-weight: 600; color: #065f46; margin-bottom: 8px; font-size: 16px;">텍스트가 완벽합니다</div>
+        <div style="line-height: 1.8; white-space: pre-wrap; word-break: break-word; color: #1f2937; font-size: 14px; max-height: 200px; overflow-y: auto;">${originalText}</div>
+      </div>
     </div>
   `;
 
@@ -196,75 +253,78 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
   );
   
   const buttonsHTML = canEdit ? `
-    <div style="display: flex; gap: 8px; margin-top: 20px;">
+    <div style="padding: 20px 24px; background: #f9fafb; border-top: 1px solid #e5e7eb; display: flex; gap: 10px;">
       <button id="replace-text" style="
         flex: 1;
-        padding: 12px 20px;
-        background: #2196f3;
+        padding: 14px 20px;
+        background: #15C39A;
         color: white;
         border: none;
-        border-radius: 8px;
-        font-size: 14px;
+        border-radius: 10px;
+        font-size: 15px;
         font-weight: 600;
         cursor: pointer;
-        transition: background 0.2s;
+        transition: all 0.2s;
+        box-shadow: 0 2px 4px rgba(21, 195, 154, 0.2);
       ">
-        ✏️ 수정하기
+        🔄 텍스트 수정하기
       </button>
       <button id="copy-corrected-text" style="
         flex: 1;
-        padding: 12px 20px;
-        background: #4caf50;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 14px;
+        padding: 14px 20px;
+        background: #ffffff;
+        color: #374151;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        font-size: 15px;
         font-weight: 600;
         cursor: pointer;
-        transition: background 0.2s;
+        transition: all 0.2s;
       ">
-        📋 복사
+        📋 복사하기
       </button>
       <button id="close-modal" style="
-        padding: 12px 20px;
-        background: #9e9e9e;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 14px;
+        padding: 14px 18px;
+        background: #ffffff;
+        color: #9ca3af;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        font-size: 18px;
         font-weight: 600;
         cursor: pointer;
-        transition: background 0.2s;
+        transition: all 0.2s;
+        line-height: 1;
       ">
-        닫기
+        ✕
       </button>
     </div>
   ` : `
-    <div style="display: flex; gap: 8px; margin-top: 20px;">
+    <div style="padding: 20px 24px; background: #f9fafb; border-top: 1px solid #e5e7eb; display: flex; gap: 10px;">
       <button id="copy-corrected-text" style="
         flex: 1;
-        padding: 12px 20px;
-        background: #4caf50;
+        padding: 14px 20px;
+        background: #15C39A;
         color: white;
         border: none;
-        border-radius: 8px;
-        font-size: 14px;
+        border-radius: 10px;
+        font-size: 15px;
         font-weight: 600;
         cursor: pointer;
-        transition: background 0.2s;
+        transition: all 0.2s;
+        box-shadow: 0 2px 4px rgba(21, 195, 154, 0.2);
       ">
-        📋 교정된 텍스트 복사
+        📋 텍스트 복사
       </button>
       <button id="close-modal" style="
-        padding: 12px 20px;
-        background: #9e9e9e;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 14px;
+        padding: 14px 20px;
+        background: #ffffff;
+        color: #374151;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        font-size: 15px;
         font-weight: 600;
         cursor: pointer;
-        transition: background 0.2s;
+        transition: all 0.2s;
       ">
         닫기
       </button>
@@ -272,17 +332,16 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
   `;
 
   modalContent.innerHTML = `
-    <div style="font-size: 20px; font-weight: bold; margin-bottom: 16px; color: #333;">
-      ${title}
-    </div>
+    ${headerHTML}
     ${comparisonHTML}
     ${buttonsHTML}
     <div id="action-status" style="
-      margin-top: 12px;
-      padding: 8px;
-      border-radius: 6px;
+      margin: 0 24px 20px 24px;
+      padding: 12px;
+      border-radius: 8px;
       text-align: center;
       font-size: 13px;
+      font-weight: 500;
       display: none;
     "></div>
   `;
@@ -299,10 +358,14 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
   // 수정하기 버튼 (selectionInfo가 있을 때만)
   if (replaceBtn && selectionInfo) {
     replaceBtn.addEventListener('mouseenter', () => {
-      replaceBtn.style.background = '#1976d2';
+      replaceBtn.style.background = '#13B389';
+      replaceBtn.style.transform = 'translateY(-1px)';
+      replaceBtn.style.boxShadow = '0 4px 8px rgba(21, 195, 154, 0.3)';
     });
     replaceBtn.addEventListener('mouseleave', () => {
-      replaceBtn.style.background = '#2196f3';
+      replaceBtn.style.background = '#15C39A';
+      replaceBtn.style.transform = 'translateY(0)';
+      replaceBtn.style.boxShadow = '0 2px 4px rgba(21, 195, 154, 0.2)';
     });
 
     replaceBtn.addEventListener('click', () => {
@@ -464,17 +527,29 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
 
   // 복사 버튼 hover 효과
   copyBtn.addEventListener('mouseenter', () => {
-    copyBtn.style.background = '#45a049';
+    if (copyBtn.style.background === 'rgb(21, 195, 154)' || copyBtn.style.background === '#15C39A') {
+      copyBtn.style.background = '#13B389';
+      copyBtn.style.transform = 'translateY(-1px)';
+    } else {
+      copyBtn.style.background = '#f3f4f6';
+      copyBtn.style.borderColor = '#9ca3af';
+    }
   });
   copyBtn.addEventListener('mouseleave', () => {
-    copyBtn.style.background = '#4caf50';
+    if (copyBtn.textContent.includes('복사')) {
+      copyBtn.style.background = canEdit ? '#ffffff' : '#15C39A';
+      copyBtn.style.borderColor = '#d1d5db';
+      copyBtn.style.transform = 'translateY(0)';
+    }
   });
 
   closeBtn.addEventListener('mouseenter', () => {
-    closeBtn.style.background = '#757575';
+    closeBtn.style.background = '#f3f4f6';
+    closeBtn.style.borderColor = '#9ca3af';
   });
   closeBtn.addEventListener('mouseleave', () => {
-    closeBtn.style.background = '#9e9e9e';
+    closeBtn.style.background = '#ffffff';
+    closeBtn.style.borderColor = '#d1d5db';
   });
 
   // 복사 버튼 클릭

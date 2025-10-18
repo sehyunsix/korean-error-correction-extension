@@ -19,6 +19,7 @@ async function checkAPIServer() {
 
 // API 상태 표시
 async function updateAPIStatus() {
+  const apiStatusSection = document.getElementById('apiStatusSection');
   const apiStatusDiv = document.getElementById('apiStatus');
   const apiModeSpan = document.getElementById('apiMode');
   const serverStatusText = document.getElementById('serverStatusText');
@@ -30,41 +31,41 @@ async function updateAPIStatus() {
     const response = await chrome.tabs.sendMessage(tab.id, { action: 'getAPIStatus' });
     
     if (response && response.useAPI !== undefined) {
-      apiStatusDiv.style.display = 'block';
+      apiStatusSection.style.display = 'block';
       
       if (response.useAPI) {
         // API 모드
         const serverOnline = await checkAPIServer();
         
         if (serverOnline) {
-          apiStatusDiv.style.backgroundColor = '#e8f5e9';
-          apiStatusDiv.style.border = '1px solid #4caf50';
+          apiStatusDiv.style.backgroundColor = '#d1fae5';
+          apiStatusDiv.style.borderColor = '#a7f3d0';
           apiModeSpan.textContent = '🤖 AI (ET5)';
-          apiModeSpan.style.color = '#2e7d32';
+          apiModeSpan.style.color = '#065f46';
           serverStatusText.textContent = '🟢 온라인';
-          serverStatusText.style.color = '#2e7d32';
+          serverStatusText.style.color = '#065f46';
           apiServerStatusDiv.style.display = 'flex';
         } else {
-          apiStatusDiv.style.backgroundColor = '#fff3cd';
-          apiStatusDiv.style.border = '1px solid #ffc107';
+          apiStatusDiv.style.backgroundColor = '#fef3c7';
+          apiStatusDiv.style.borderColor = '#fcd34d';
           apiModeSpan.textContent = '⚠️ API → 룰 베이스';
-          apiModeSpan.style.color = '#f57c00';
+          apiModeSpan.style.color = '#92400e';
           serverStatusText.textContent = '🔴 오프라인 (폴백)';
-          serverStatusText.style.color = '#d32f2f';
+          serverStatusText.style.color = '#991b1b';
           apiServerStatusDiv.style.display = 'flex';
         }
       } else {
         // 룰 베이스 모드
-        apiStatusDiv.style.backgroundColor = '#e3f2fd';
-        apiStatusDiv.style.border = '1px solid #2196f3';
+        apiStatusDiv.style.backgroundColor = '#dbeafe';
+        apiStatusDiv.style.borderColor = '#93c5fd';
         apiModeSpan.textContent = '🔧 룰 베이스';
-        apiModeSpan.style.color = '#1976d2';
+        apiModeSpan.style.color = '#1e3a8a';
         apiServerStatusDiv.style.display = 'none';
       }
     }
   } catch (error) {
     // content script가 로드되지 않았거나 메시지 전송 실패
-    apiStatusDiv.style.display = 'none';
+    apiStatusSection.style.display = 'none';
   }
 }
 
