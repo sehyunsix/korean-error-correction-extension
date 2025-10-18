@@ -12,6 +12,194 @@
  */
 
 /**
+ * 교정 결과를 표시하는 모달 생성
+ */
+function showCorrectionModal(title, originalText, correctedText, errors) {
+  // 기존 모달 제거
+  const existingModal = document.getElementById('spelling-correction-modal');
+  if (existingModal) {
+    existingModal.remove();
+  }
+
+  // 모달 컨테이너 생성
+  const modal = document.createElement('div');
+  modal.id = 'spelling-correction-modal';
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  `;
+
+  // 모달 내용
+  const modalContent = document.createElement('div');
+  modalContent.style.cssText = `
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  `;
+
+  // 오류 목록 HTML 생성
+  let errorListHTML = '';
+  if (errors.length > 0) {
+    errorListHTML = `
+      <div style="margin: 16px 0; padding: 12px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+        <div style="font-weight: 600; margin-bottom: 8px; color: #856404;">발견된 오류:</div>
+        ${errors.map(e => `
+          <div style="margin: 4px 0; padding: 4px 0; color: #856404;">
+            <span style="background: #ffebee; padding: 2px 6px; border-radius: 4px; text-decoration: line-through;">${e.token}</span>
+            <span style="margin: 0 8px;">→</span>
+            <span style="background: #e8f5e9; padding: 2px 6px; border-radius: 4px; font-weight: 600;">${e.suggestions[0]}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  // 텍스트 비교 HTML
+  const comparisonHTML = originalText !== correctedText ? `
+    <div style="margin: 16px 0;">
+      <div style="margin-bottom: 12px;">
+        <div style="font-weight: 600; color: #d32f2f; margin-bottom: 6px;">❌ 수정 전:</div>
+        <div style="padding: 12px; background: #ffebee; border-radius: 8px; line-height: 1.6; white-space: pre-wrap; word-break: break-word;">${originalText}</div>
+      </div>
+      <div>
+        <div style="font-weight: 600; color: #388e3c; margin-bottom: 6px;">✅ 수정 후:</div>
+        <div style="padding: 12px; background: #e8f5e9; border-radius: 8px; line-height: 1.6; white-space: pre-wrap; word-break: break-word;">${correctedText}</div>
+      </div>
+    </div>
+  ` : `
+    <div style="margin: 16px 0; padding: 12px; background: #e8f5e9; border-radius: 8px;">
+      <div style="font-weight: 600; color: #388e3c; margin-bottom: 6px;">✅ 원본 텍스트:</div>
+      <div style="line-height: 1.6; white-space: pre-wrap; word-break: break-word;">${originalText}</div>
+    </div>
+  `;
+
+  modalContent.innerHTML = `
+    <div style="font-size: 20px; font-weight: bold; margin-bottom: 16px; color: #333;">
+      ${title}
+    </div>
+    ${errorListHTML}
+    ${comparisonHTML}
+    <div style="display: flex; gap: 8px; margin-top: 20px;">
+      <button id="copy-corrected-text" style="
+        flex: 1;
+        padding: 12px 20px;
+        background: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+      ">
+        📋 교정된 텍스트 복사
+      </button>
+      <button id="close-modal" style="
+        padding: 12px 20px;
+        background: #9e9e9e;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+      ">
+        닫기
+      </button>
+    </div>
+    <div id="copy-status" style="
+      margin-top: 12px;
+      padding: 8px;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 13px;
+      display: none;
+    "></div>
+  `;
+
+  modal.appendChild(modalContent);
+  document.body.appendChild(modal);
+
+  // 버튼 hover 효과
+  const copyBtn = modalContent.querySelector('#copy-corrected-text');
+  const closeBtn = modalContent.querySelector('#close-modal');
+  const copyStatus = modalContent.querySelector('#copy-status');
+
+  copyBtn.addEventListener('mouseenter', () => {
+    copyBtn.style.background = '#45a049';
+  });
+  copyBtn.addEventListener('mouseleave', () => {
+    copyBtn.style.background = '#4caf50';
+  });
+
+  closeBtn.addEventListener('mouseenter', () => {
+    closeBtn.style.background = '#757575';
+  });
+  closeBtn.addEventListener('mouseleave', () => {
+    closeBtn.style.background = '#9e9e9e';
+  });
+
+  // 복사 버튼 클릭
+  copyBtn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(correctedText);
+      copyStatus.textContent = '✅ 클립보드에 복사되었습니다!';
+      copyStatus.style.background = '#e8f5e9';
+      copyStatus.style.color = '#388e3c';
+      copyStatus.style.display = 'block';
+      
+      console.log('✅ 클립보드 복사 성공:', correctedText.substring(0, 50) + '...');
+      
+      // 2초 후 모달 자동 닫기
+      setTimeout(() => {
+        modal.remove();
+      }, 2000);
+    } catch (error) {
+      console.error('❌ 클립보드 복사 실패:', error);
+      copyStatus.textContent = '❌ 복사 실패. 다시 시도해주세요.';
+      copyStatus.style.background = '#ffebee';
+      copyStatus.style.color = '#d32f2f';
+      copyStatus.style.display = 'block';
+    }
+  });
+
+  // 닫기 버튼 클릭
+  closeBtn.addEventListener('click', () => {
+    modal.remove();
+  });
+
+  // 모달 배경 클릭시 닫기
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.remove();
+    }
+  });
+
+  // ESC 키로 닫기
+  const escHandler = (e) => {
+    if (e.key === 'Escape') {
+      modal.remove();
+      document.removeEventListener('keydown', escHandler);
+    }
+  };
+  document.addEventListener('keydown', escHandler);
+}
+
+/**
  * API로 맞춤법 검사 (Gemini 우선)
  */
 async function checkSpellingWithAPI(text) {
@@ -223,19 +411,24 @@ async function highlightErrors(bodyElement) {
     // Input/Textarea 또는 iframe 필드인 경우 (하이라이트 불가)
     if (selectionInfo.type === 'input' || selectionInfo.type === 'iframe') {
       if (errors.length === 0) {
-        alert('✅ 오류가 없습니다!');
+        showCorrectionModal('✅ 오류가 없습니다!', selectedText, selectedText, []);
         console.log(`✅ ${selectionInfo.type} 필드 - 오류 없음`);
         STATE.lastCheckStats.foundErrors = 0;
-  return 0;
-}
-
-      // Input/iframe 필드는 교정된 텍스트를 표시
-      const correctedText = errors.length > 0 
-        ? errors.reduce((text, error) => text.replace(error.token, error.suggestions[0]), selectedText)
-        : selectedText;
+        return 0;
+      }
       
-      const errorList = errors.map(e => `• ${e.token} → ${e.suggestions[0]}`).join('\n');
-      alert(`🔴 ${errors.length}개의 오류 발견:\n\n${errorList}\n\n교정된 텍스트:\n${correctedText}\n\n💡 교정된 텍스트를 복사하여 사용하세요.`);
+      // Input/iframe 필드는 교정된 텍스트를 표시
+      let correctedText = selectedText;
+      for (const error of errors) {
+        correctedText = correctedText.replace(error.token, error.suggestions[0]);
+      }
+      
+      showCorrectionModal(
+        `🔴 ${errors.length}개의 오류 발견`,
+        selectedText,
+        correctedText,
+        errors
+      );
       
       console.log(`🔴 ${selectionInfo.type} 필드 - ${errors.length}개의 오류 발견`);
       STATE.lastCheckStats.foundErrors = errors.length;

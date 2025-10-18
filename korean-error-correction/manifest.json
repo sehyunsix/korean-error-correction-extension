@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "한글 맞춤법 검사기",
-  "version": "4.0.3",
-  "version_name": "4.0.3 - iframe 내부 선택 지원 (TinyMCE)",
+  "version": "4.0.4",
+  "version_name": "4.0.4 - 교정 모달 UI 및 자동 클립보드 복사",
   "description": "텍스트를 선택하면 ET5 AI 모델로 교정해주는 맞춤법 검사기",
   "permissions": [
     "activeTab",
