@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "한글 맞춤법 검사기",
-  "version": "4.0.1",
-  "version_name": "4.0.1 - API 오류 메시지 개선",
+  "version": "4.0.2",
+  "version_name": "4.0.2 - Input 필드 선택 지원",
   "description": "텍스트를 선택하면 ET5 AI 모델로 교정해주는 맞춤법 검사기",
   "permissions": [
     "activeTab",

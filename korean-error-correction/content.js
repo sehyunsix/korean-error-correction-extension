@@ -32,19 +32,75 @@ async function checkSpellingWithAPI(text) {
 }
 
 /**
+ * 선택된 텍스트 가져오기 (input/textarea/contenteditable 지원)
+ */
+function getSelectedText() {
+  // 1. 활성 요소 확인
+  const activeElement = document.activeElement;
+  
+  // 2. Input/Textarea 필드인 경우
+  if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+    const start = activeElement.selectionStart;
+    const end = activeElement.selectionEnd;
+    
+    if (start !== end) {
+      const selectedText = activeElement.value.substring(start, end);
+      console.log('📝 Input/Textarea에서 선택:', selectedText.substring(0, 100));
+      return {
+        text: selectedText,
+        element: activeElement,
+        type: 'input',
+        start: start,
+        end: end
+      };
+    }
+  }
+  
+  // 3. ContentEditable 요소인 경우
+  if (activeElement && activeElement.isContentEditable) {
+    const selection = window.getSelection();
+    if (selection && selection.toString().trim()) {
+      console.log('✏️ ContentEditable에서 선택:', selection.toString().substring(0, 100));
+      return {
+        text: selection.toString().trim(),
+        element: activeElement,
+        type: 'contenteditable',
+        selection: selection
+      };
+    }
+  }
+  
+  // 4. 일반 텍스트 선택
+  const selection = window.getSelection();
+  if (selection && selection.toString().trim()) {
+    console.log('📄 일반 텍스트 선택:', selection.toString().substring(0, 100));
+    return {
+      text: selection.toString().trim(),
+      element: null,
+      type: 'normal',
+      selection: selection
+    };
+  }
+  
+  return null;
+}
+
+/**
  * 선택된 텍스트에 API 기반 하이라이트 적용
  */
 async function highlightErrors(bodyElement) {
   console.log('\n=== 선택된 텍스트 맞춤법 검사 시작 ===');
   
-  const selection = window.getSelection();
-  if (!selection || !selection.toString().trim()) {
-    alert('텍스트를 선택해주세요.');
+  // 선택된 텍스트 가져오기
+  const selectionInfo = getSelectedText();
+  
+  if (!selectionInfo || !selectionInfo.text) {
+    alert('텍스트를 선택해주세요.\n\n💡 Tip:\n- 마우스로 텍스트를 드래그하세요\n- Input 필드에서는 텍스트를 선택한 후 단축키를 누르세요');
     return 0;
   }
 
-  const selectedText = selection.toString().trim();
-  console.log(`선택된 텍스트: "${selectedText.substring(0, 100)}..."`);
+  const selectedText = selectionInfo.text;
+  console.log(`✅ 선택된 텍스트 (${selectionInfo.type}): "${selectedText.substring(0, 100)}..."`);
 
   // 하이라이트 제거
   clearHighlights();
@@ -76,7 +132,35 @@ async function highlightErrors(bodyElement) {
     
     const errors = Array.isArray(result) ? result : (result.errors || []);
 
-    // 선택 범위 가져오기
+    // Input/Textarea 필드인 경우
+    if (selectionInfo.type === 'input') {
+      if (errors.length === 0) {
+        alert('✅ 오류가 없습니다!');
+        console.log('✅ Input 필드 - 오류 없음');
+        STATE.lastCheckStats.foundErrors = 0;
+        return 0;
+      }
+      
+      // Input 필드는 교정된 텍스트를 표시
+      const correctedText = errors.length > 0 
+        ? errors.reduce((text, error) => text.replace(error.token, error.suggestions[0]), selectedText)
+        : selectedText;
+      
+      const errorList = errors.map(e => `• ${e.token} → ${e.suggestions[0]}`).join('\n');
+      alert(`🔴 ${errors.length}개의 오류 발견:\n\n${errorList}\n\n교정된 텍스트:\n${correctedText}\n\n💡 교정된 텍스트를 복사하여 사용하세요.`);
+      
+      console.log(`🔴 Input 필드 - ${errors.length}개의 오류 발견`);
+      STATE.lastCheckStats.foundErrors = errors.length;
+      return errors.length;
+    }
+
+    // 일반 텍스트 또는 ContentEditable인 경우
+    const selection = selectionInfo.selection || window.getSelection();
+    if (!selection || selection.rangeCount === 0) {
+      alert('범위를 다시 선택해주세요.');
+      return 0;
+    }
+
     const range = selection.getRangeAt(0);
 
     if (errors.length === 0) {
