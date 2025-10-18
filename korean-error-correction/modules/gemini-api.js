@@ -4,71 +4,45 @@
  */
 
 /**
- * Gemini API로 맞춤법 검사
+ * Gemini API로 맞춤법 검사 (Background를 통해)
  */
 async function checkSpellingWithGemini(text, apiKey) {
   try {
-    console.log('\n=== Gemini API 맞춤법 검사 시작 ===');
+    console.log('\n=== [CONTENT] Gemini API 맞춤법 검사 요청 ===');
     console.log(`검사할 텍스트: "${text.substring(0, 100)}..."`);
     
     const selectedModel = await getSelectedModel();
-    let apiUrl = CONFIG.GEMINI_API_URL;
     
     if (selectedModel) {
-      const modelName = selectedModel.replace('models/', '');
-      apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
-      console.log(`🎯 선택된 모델: ${modelName}`);
+      console.log(`🎯 선택된 모델: ${selectedModel}`);
     } else {
       console.log(`🎯 기본 모델 사용`);
     }
     
-    const prompt = createGeminiPrompt(text);
-    console.log(`📤 API 요청 URL: ${apiUrl}?key=***`);
-    
-    const response = await fetch(`${apiUrl}?key=${apiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.1,
-          topK: 1,
-          topP: 0.8,
-          maxOutputTokens: 2048,
-        }
-      })
+    // Background에 메시지 전송하여 API 호출 요청
+    console.log('📤 Background로 API 호출 요청 전송...');
+    const response = await chrome.runtime.sendMessage({
+      action: 'callGeminiAPI',
+      text: text,
+      apiKey: apiKey,
+      selectedModel: selectedModel
     });
     
-    console.log(`📥 API 응답 상태: ${response.status} ${response.statusText}`);
+    console.log('📥 Background로부터 응답 받음:', response);
     
-    if (!response.ok) {
-      await handleGeminiApiError(response, selectedModel);
-      throw new Error(`Gemini API 오류: ${response.status} (${response.statusText})`);
+    if (response.success) {
+      console.log(`✅ API 호출 성공: ${response.data.errors?.length || 0}개 오류 발견`);
+      console.log('=== [CONTENT] Gemini API 맞춤법 검사 완료 ===\n');
+      return response.data.errors || [];
+    } else {
+      console.error('❌ API 호출 실패:', response.error);
+      return {
+        isError: true,
+        errorType: response.error.errorType,
+        errorMessage: response.error.errorMessage,
+        errors: []
+      };
     }
-    
-    const data = await response.json();
-    
-    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-      console.error('❌ 예상치 못한 API 응답 구조:', JSON.stringify(data, null, 2));
-      throw new Error('Gemini API 응답 구조가 올바르지 않습니다');
-    }
-    
-    const textContent = data.candidates[0].content.parts[0].text;
-    console.log('✅ Gemini 응답:', textContent.substring(0, 200) + (textContent.length > 200 ? '...' : ''));
-    
-    const result = parseGeminiResponse(textContent);
-    const validErrors = filterValidErrors(result.errors || []);
-    
-    console.log(`✅ 필터링 완료: ${result.errors?.length || 0}개 → ${validErrors.length}개`);
-    console.log('=== Gemini API 맞춤법 검사 완료 ===\n');
-    
-    return validErrors;
   } catch (error) {
     console.error('');
     console.error('❌❌❌ Gemini API 맞춤법 검사 실패 ❌❌❌');

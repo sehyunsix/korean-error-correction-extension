@@ -10,6 +10,181 @@ chrome.runtime.onInstalled.addListener(() => {
   console.log('');
 });
 
+// Content script에서 온 메시지 처리 (Gemini API 호출)
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'callGeminiAPI') {
+    console.log('\n🔵 [BACKGROUND] Gemini API 호출 요청 받음');
+    console.log('📝 텍스트 길이:', request.text?.length || 0);
+    
+    // 비동기 API 호출
+    callGeminiAPI(request.text, request.apiKey, request.selectedModel)
+      .then(result => {
+        console.log('✅ [BACKGROUND] API 호출 성공, 결과 반환');
+        sendResponse({ success: true, data: result });
+      })
+      .catch(error => {
+        console.error('❌ [BACKGROUND] API 호출 실패:', error);
+        sendResponse({ 
+          success: false, 
+          error: {
+            isError: true,
+            errorType: error.name,
+            errorMessage: error.message
+          }
+        });
+      });
+    
+    return true; // 비동기 응답을 위해 true 반환
+  }
+});
+
+/**
+ * Gemini API 호출 함수
+ */
+async function callGeminiAPI(text, apiKey, selectedModel) {
+  try {
+    console.log('\n=== [BACKGROUND] Gemini API 맞춤법 검사 시작 ===');
+    
+    let apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent';
+    
+    if (selectedModel) {
+      const modelName = selectedModel.replace('models/', '');
+      apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
+      console.log(`🎯 선택된 모델: ${modelName}`);
+    }
+    
+    const prompt = createGeminiPrompt(text);
+    console.log(`📤 API 요청 URL: ${apiUrl}?key=***`);
+    
+    const response = await fetch(`${apiUrl}?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.1,
+          topK: 1,
+          topP: 0.8,
+          maxOutputTokens: 2048,
+        }
+      })
+    });
+    
+    console.log(`📥 API 응답 상태: ${response.status} ${response.statusText}`);
+    
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error('❌ API 오류 응답:', errorBody);
+      throw new Error(`Gemini API 오류: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+      console.error('❌ 예상치 못한 API 응답 구조:', JSON.stringify(data, null, 2));
+      throw new Error('Gemini API 응답 구조가 올바르지 않습니다');
+    }
+    
+    const textContent = data.candidates[0].content.parts[0].text;
+    console.log('✅ Gemini 응답:', textContent.substring(0, 200));
+    
+    const result = parseGeminiResponse(textContent);
+    const validErrors = filterValidErrors(result.errors || []);
+    
+    console.log(`✅ 필터링 완료: ${result.errors?.length || 0}개 → ${validErrors.length}개`);
+    console.log('=== [BACKGROUND] Gemini API 맞춤법 검사 완료 ===\n');
+    
+    return { errors: validErrors, corrected_text: result.corrected_text };
+  } catch (error) {
+    console.error('❌ [BACKGROUND] API 호출 실패:', error);
+    throw error;
+  }
+}
+
+/**
+ * Gemini 프롬프트 생성
+ */
+function createGeminiPrompt(text) {
+  return `당신은 한국어 맞춤법 전문가입니다. 다음 텍스트에서 **틀린 부분만** 정확하게 찾아주세요.
+
+텍스트: "${text}"
+
+**중요 규칙**:
+1. 실제로 맞춤법이 **틀린 단어만** 찾아주세요
+2. 이미 올바른 단어는 절대 포함하지 마세요
+3. token(오류 단어)과 suggestions(교정 단어)가 같으면 안 됩니다
+4. 띄어쓰기, 문법, 맞춤법 오류만 찾아주세요
+
+**영어 단어 처리 규칙 (매우 중요!):**
+다음과 같은 영어는 **절대 오류로 판단하지 마세요**:
+- 프로그래밍 언어: JavaScript, Python, React, Vue, TypeScript, Java, C++, Ruby, Go, Rust 등
+- 라이브러리/프레임워크: npm, webpack, Redux, Django, Flask, Express, Next.js, Nuxt 등
+- 기술 용어: API, HTTP, HTTPS, JSON, XML, CSS, HTML, REST, GraphQL, SQL 등
+- 메서드/함수명: useState, useEffect, onClick, getElementById, querySelector 등
+- 파일 확장자: .js, .py, .tsx, .json, .css, .html, .md 등
+- 패키지/모듈: axios, lodash, moment, dayjs 등
+- 일반 영어 단어: import, export, function, class, const, let, var 등
+
+다음 JSON 형식으로 응답해주세요:
+{
+  "errors": [
+    {
+      "token": "틀린 단어",
+      "suggestions": ["올바른 단어"],
+      "type": "spell",
+      "info": "오류 설명"
+    }
+  ],
+  "corrected_text": "전체 교정된 텍스트"
+}
+
+오류가 없으면 errors는 빈 배열 []로, corrected_text는 원본 텍스트 그대로 반환하세요.
+JSON만 출력하고 다른 설명은 하지 마세요.`;
+}
+
+/**
+ * Gemini 응답 파싱
+ */
+function parseGeminiResponse(textContent) {
+  let jsonText = textContent;
+  if (jsonText.includes('```json')) {
+    jsonText = jsonText.split('```json')[1].split('```')[0].trim();
+  } else if (jsonText.includes('```')) {
+    jsonText = jsonText.split('```')[1].split('```')[0].trim();
+  }
+  
+  try {
+    return JSON.parse(jsonText);
+  } catch (error) {
+    console.error('❌ JSON 파싱 실패:', error);
+    console.error('원본 텍스트:', jsonText);
+    return { errors: [], corrected_text: '' };
+  }
+}
+
+/**
+ * 유효한 오류만 필터링
+ */
+function filterValidErrors(errors) {
+  return errors.filter(error => {
+    if (!error.token || !error.suggestions || !error.suggestions[0]) {
+      return false;
+    }
+    // token과 suggestion이 같으면 제외
+    if (error.token === error.suggestions[0]) {
+      console.log(`⚠️ 필터링: "${error.token}" === "${error.suggestions[0]}"`);
+      return false;
+    }
+    return true;
+  });
+}
+
 // 단축키 명령 처리
 chrome.commands.onCommand.addListener(async (command) => {
   console.log('');
