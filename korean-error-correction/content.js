@@ -120,19 +120,7 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
     existingModal.remove();
   }
 
-  // 선택된 텍스트의 위치 가져오기
-  let selectionRect = null;
-  try {
-    const selection = window.getSelection();
-    if (selection && selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0);
-      selectionRect = range.getBoundingClientRect();
-    }
-  } catch (e) {
-    console.log('선택 위치 가져오기 실패, 중앙에 표시합니다:', e);
-  }
-
-  // 모달 컨테이너 생성
+  // 모달 컨테이너 생성 (중앙 배치)
   const modal = document.createElement('div');
   modal.id = 'spelling-correction-modal';
   modal.style.cssText = `
@@ -141,8 +129,11 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(15, 23, 42, 0.4);
-    backdrop-filter: blur(2px);
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(3px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
     z-index: 999999;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
     animation: modalFadeIn 0.2s ease;
@@ -150,61 +141,12 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
 
   // 모달 내용
   const modalContent = document.createElement('div');
-  
-  // 모달 위치 계산 (Grammarly 스타일 - 텍스트 옆에 표시)
-  let modalPosition = '';
-  if (selectionRect) {
-    const modalWidth = 480;
-    const modalMaxHeight = 600;
-    const padding = 16;
-    
-    // 기본적으로 선택된 텍스트 오른쪽에 표시
-    let left = selectionRect.right + padding;
-    let top = selectionRect.top;
-    
-    // 오른쪽 공간이 부족하면 왼쪽에 표시
-    if (left + modalWidth > window.innerWidth - padding) {
-      left = selectionRect.left - modalWidth - padding;
-    }
-    
-    // 왼쪽도 공간이 부족하면 텍스트 아래에 표시
-    if (left < padding) {
-      left = Math.max(padding, Math.min(selectionRect.left, window.innerWidth - modalWidth - padding));
-      top = selectionRect.bottom + padding;
-    }
-    
-    // 상단 경계 체크
-    if (top < padding) {
-      top = padding;
-    }
-    
-    // 하단 경계 체크
-    if (top + modalMaxHeight > window.innerHeight - padding) {
-      top = Math.max(padding, window.innerHeight - modalMaxHeight - padding);
-    }
-    
-    modalPosition = `
-      position: fixed;
-      left: ${left}px;
-      top: ${top}px;
-    `;
-  } else {
-    // 위치를 가져올 수 없으면 화면 중앙에 표시
-    modalPosition = `
-      position: fixed;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-    `;
-  }
-  
   modalContent.style.cssText = `
-    ${modalPosition}
     background: white;
     border-radius: 16px;
     padding: 0;
-    width: 480px;
-    max-width: calc(100vw - 32px);
+    width: 800px;
+    max-width: calc(100vw - 40px);
     max-height: calc(100vh - 80px);
     overflow: hidden;
     display: flex;
@@ -278,53 +220,87 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
 
   // 모달 헤더
   const headerHTML = originalText !== correctedText ? `
-    <div style="background: linear-gradient(135deg, #15C39A 0%, #0FA784 100%); padding: 24px; color: white;">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-        <h2 style="margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.5px;">✨ 맞춤법 교정 완료</h2>
-        <div style="background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600;">
-          ${errors.length}개 수정
+    <div style="background: linear-gradient(135deg, #15C39A 0%, #0FA784 100%); padding: 20px 24px; color: white; position: relative;">
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <h2 style="margin: 0 0 4px 0; font-size: 19px; font-weight: 700; letter-spacing: -0.5px;">✨ 맞춤법 교정 완료</h2>
+          <p style="margin: 0; font-size: 13px; opacity: 0.9;">검사가 완료되었습니다</p>
         </div>
+        <button id="close-modal-header" style="
+          background: rgba(255, 255, 255, 0.2);
+          border: none;
+          color: white;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          cursor: pointer;
+          font-size: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: background 0.2s;
+          padding: 0;
+          line-height: 1;
+        ">✕</button>
       </div>
-      <p style="margin: 0; font-size: 14px; opacity: 0.95;">검사가 완료되었습니다. 변경사항을 확인해주세요.</p>
     </div>
   ` : `
-    <div style="background: linear-gradient(135deg, #15C39A 0%, #0FA784 100%); padding: 24px; color: white;">
-      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-        <div style="width: 48px; height: 48px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px;">
-          ✓
+    <div style="background: linear-gradient(135deg, #15C39A 0%, #0FA784 100%); padding: 20px 24px; color: white; position: relative;">
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px;">✓</div>
+          <div>
+            <h2 style="margin: 0 0 2px 0; font-size: 19px; font-weight: 700; letter-spacing: -0.5px;">완벽합니다!</h2>
+            <p style="margin: 0; font-size: 13px; opacity: 0.9;">오류가 발견되지 않았습니다</p>
+          </div>
         </div>
-        <div>
-          <h2 style="margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.5px;">완벽합니다!</h2>
-          <p style="margin: 4px 0 0 0; font-size: 14px; opacity: 0.95;">오류가 발견되지 않았습니다</p>
-        </div>
+        <button id="close-modal-header" style="
+          background: rgba(255, 255, 255, 0.2);
+          border: none;
+          color: white;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          cursor: pointer;
+          font-size: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: background 0.2s;
+          padding: 0;
+          line-height: 1;
+        ">✕</button>
       </div>
     </div>
   `;
   
-  // 텍스트 비교 HTML (스크롤 영역)
+  // 텍스트 비교 HTML (2단 레이아웃 - 네이버 스타일)
   const comparisonHTML = originalText !== correctedText ? `
-    <div style="padding: 24px;">
-      <div style="margin-bottom: 20px;">
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-          <div style="width: 4px; height: 20px; background: #ef4444; border-radius: 2px;"></div>
-          <div style="font-weight: 600; color: #1f2937; font-size: 14px;">수정 전</div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #e5e7eb; padding: 0;">
+      <!-- 왼쪽: 원문 -->
+      <div style="background: white; padding: 24px;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <div style="font-weight: 700; color: #1f2937; font-size: 15px; letter-spacing: -0.3px;">원문</div>
+          <div style="font-size: 11px; color: #9ca3af; font-weight: 500;">${originalText.length}자</div>
         </div>
-        <div style="padding: 16px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; line-height: 1.8; white-space: pre-wrap; word-break: break-word; font-size: 14px; color: #1f2937;">${highlightedOriginalText}</div>
+        <div style="padding: 16px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; line-height: 1.8; white-space: pre-wrap; word-break: break-word; font-size: 14px; color: #1f2937; min-height: 120px;">${highlightedOriginalText}</div>
       </div>
-      <div>
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-          <div style="width: 4px; height: 20px; background: #15C39A; border-radius: 2px;"></div>
-          <div style="font-weight: 600; color: #1f2937; font-size: 14px;">수정 후</div>
+      
+      <!-- 오른쪽: 교정 결과 -->
+      <div style="background: white; padding: 24px;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <div style="font-weight: 700; color: #15C39A; font-size: 15px; letter-spacing: -0.3px;">교정 결과</div>
+          <div style="font-size: 11px; color: #15C39A; font-weight: 600; background: #d1fae5; padding: 2px 8px; border-radius: 12px;">${errors.length}개 수정</div>
         </div>
-        <div style="padding: 16px; background: #d1fae5; border: 1px solid #a7f3d0; border-radius: 10px; line-height: 1.8; white-space: pre-wrap; word-break: break-word; font-size: 14px; color: #1f2937;">${correctedText}</div>
+        <div style="padding: 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; line-height: 1.8; white-space: pre-wrap; word-break: break-word; font-size: 14px; color: #1f2937; min-height: 120px;">${correctedText}</div>
       </div>
     </div>
   ` : `
-    <div style="padding: 24px;">
-      <div style="padding: 20px; background: #d1fae5; border: 1px solid #a7f3d0; border-radius: 10px; text-align: center;">
-        <div style="font-size: 48px; margin-bottom: 12px;">🎉</div>
-        <div style="font-weight: 600; color: #065f46; margin-bottom: 8px; font-size: 16px;">텍스트가 완벽합니다</div>
-        <div style="line-height: 1.8; white-space: pre-wrap; word-break: break-word; color: #1f2937; font-size: 14px;">${originalText}</div>
+    <div style="padding: 32px; text-align: center;">
+      <div style="display: inline-block; padding: 24px 32px; background: #d1fae5; border: 1px solid #a7f3d0; border-radius: 12px;">
+        <div style="width: 56px; height: 56px; background: #15C39A; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 16px;">✓</div>
+        <div style="font-weight: 700; color: #065f46; margin-bottom: 12px; font-size: 18px; letter-spacing: -0.3px;">텍스트가 완벽합니다</div>
+        <div style="line-height: 1.8; white-space: pre-wrap; word-break: break-word; color: #064e3b; font-size: 14px; max-width: 600px;">${originalText}</div>
       </div>
     </div>
   `;
@@ -351,7 +327,7 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
         transition: all 0.2s;
         box-shadow: 0 2px 4px rgba(21, 195, 154, 0.2);
       ">
-        🔄 텍스트 수정하기
+        ✅ 텍스트 수정하기
       </button>
       <button id="copy-corrected-text" style="
         flex: 1;
@@ -367,26 +343,11 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
       ">
         📋 복사하기
       </button>
-      <button id="close-modal" style="
-        padding: 14px 18px;
-        background: #ffffff;
-        color: #9ca3af;
-        border: 1px solid #d1d5db;
-        border-radius: 10px;
-        font-size: 18px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-        line-height: 1;
-      ">
-        ✕
-      </button>
     </div>
   ` : `
-    <div style="padding: 20px 24px; background: #f9fafb; border-top: 1px solid #e5e7eb; display: flex; gap: 10px;">
+    <div style="padding: 20px 24px; background: #f9fafb; border-top: 1px solid #e5e7eb; display: flex; gap: 10px; justify-content: center;">
       <button id="copy-corrected-text" style="
-        flex: 1;
-        padding: 14px 20px;
+        padding: 14px 32px;
         background: #15C39A;
         color: white;
         border: none;
@@ -398,19 +359,6 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
         box-shadow: 0 2px 4px rgba(21, 195, 154, 0.2);
       ">
         📋 텍스트 복사
-      </button>
-      <button id="close-modal" style="
-        padding: 14px 20px;
-        background: #ffffff;
-        color: #374151;
-        border: 1px solid #d1d5db;
-        border-radius: 10px;
-        font-size: 15px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-      ">
-        닫기
       </button>
     </div>
   `;
@@ -444,8 +392,21 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
   // 버튼 요소 가져오기
   const replaceBtn = modalContent.querySelector('#replace-text');
   const copyBtn = modalContent.querySelector('#copy-corrected-text');
-  const closeBtn = modalContent.querySelector('#close-modal');
+  const closeHeaderBtn = modalContent.querySelector('#close-modal-header');
   const actionStatus = modalContent.querySelector('#action-status');
+  
+  // 헤더 닫기 버튼 이벤트
+  if (closeHeaderBtn) {
+    closeHeaderBtn.addEventListener('mouseenter', () => {
+      closeHeaderBtn.style.background = 'rgba(255, 255, 255, 0.3)';
+    });
+    closeHeaderBtn.addEventListener('mouseleave', () => {
+      closeHeaderBtn.style.background = 'rgba(255, 255, 255, 0.2)';
+    });
+    closeHeaderBtn.addEventListener('click', () => {
+      modal.remove();
+    });
+  }
 
   // 수정하기 버튼 (selectionInfo가 있을 때만)
   if (replaceBtn && selectionInfo) {
@@ -635,15 +596,6 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
     }
   });
 
-  closeBtn.addEventListener('mouseenter', () => {
-    closeBtn.style.background = '#f3f4f6';
-    closeBtn.style.borderColor = '#9ca3af';
-  });
-  closeBtn.addEventListener('mouseleave', () => {
-    closeBtn.style.background = '#ffffff';
-    closeBtn.style.borderColor = '#d1d5db';
-  });
-
   // 복사 버튼 클릭
   copyBtn.addEventListener('click', async () => {
     try {
@@ -666,11 +618,6 @@ function showCorrectionModal(title, originalText, correctedText, errors, selecti
       actionStatus.style.color = '#d32f2f';
       actionStatus.style.display = 'block';
     }
-  });
-
-  // 닫기 버튼 클릭
-  closeBtn.addEventListener('click', () => {
-    modal.remove();
   });
 
   // 모달 배경 클릭시 닫기
