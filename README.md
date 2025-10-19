@@ -16,7 +16,7 @@ https://github.com/user-attachments/assets/e815fab7-b69f-4727-b937-35970ae591e6
 *텍스트를 드래그하면 "맞춤법 검사" 버튼이 자동으로 나타납니다! 또는 단축키를 누르거나 우클릭하세요.*
 
 
-https://github.com/user-attachments/assets/24dee234-1d32-4f3d-b07a-1781d51e914d
+https://github.com/user-attachments/assets/804e381d-7805-4aa0-8bb3-1f6073f0ba92
 
 
 *Goole sheet ,Goole Docs Chrome이면 어디서든 사용 가능합니다.*
