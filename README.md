@@ -24,6 +24,13 @@ https://github.com/user-attachments/assets/e815fab7-b69f-4727-b937-35970ae591e6
 
 *Gemini API 설정, 모델 선택, 텍스트 교정 테스트 기능을 제공합니다.*
 
+### AI 모델 선택 (30+ 모델 지원! 🤖)
+
+<img width="600" alt="AI 모델 선택 드롭다운" src="./model-select.png" />
+
+
+*Gemini 2.5 Pro/Flash, Gemini 2.0 Experimental, Gemma 3 (1B~27B), LearnLM 등 **30개 이상의 최신 AI 모델**을 자유롭게 선택할 수 있습니다!*
+
 ### 맞춤법 교정 결과
 
 <img width="853" height="1034" alt="Screenshot 2025-10-19 at 10 33 34 AM" src="https://github.com/user-attachments/assets/030818fe-005e-48cf-91f0-efb9b2dcbe07" />
@@ -35,6 +42,9 @@ https://github.com/user-attachments/assets/e815fab7-b69f-4727-b937-35970ae591e6
 
 ### 플로팅 버튼 🆕
 텍스트를 드래그하면 마우스 커서 근처에 "맞춤법 검사" 버튼이 자동으로 나타납니다. 우클릭이나 단축키 없이 즉시 검사 가능!
+
+### 30+ AI 모델 지원 🤖
+Gemini 2.5, 2.0, Gemma 3, LearnLM 등 **30개 이상의 최신 AI 모델**을 선택할 수 있습니다. 빠른 응답이 필요하면 Flash, 고품질이 필요하면 Pro 시리즈를 선택하세요!
 
 ### 선택적 수정 적용 🎯
 모든 수정을 한 번에 적용하지 않고, 원하는 수정만 골라서 적용할 수 있습니다. 이전/다음 버튼으로 순회하며 개별 승인/거절 가능!
@@ -60,10 +70,13 @@ https://github.com/user-attachments/assets/e815fab7-b69f-4727-b937-35970ae591e6
 - **전체 제어**: 전체 적용/거절 버튼으로 한 번에 처리
 - **호버 툴팁**: 교정된 단어에 마우스 올리면 상세 이유 표시
 
-### 🤖 AI 엔진
-- **Gemini AI**: Google의 최신 AI로 정확한 맞춤법 검사
-- **모델 선택**: 다양한 Gemini 모델 중 선택 가능
-- **빠른 응답**: 실시간 검사 및 교정
+### 🤖 AI 엔진 (30+ 모델 지원!)
+- **Gemini 2.5 시리즈**: Pro Preview, Flash Preview (최신 모델)
+- **Gemini 2.0 시리즈**: Flash Experimental, Image Generation 지원
+- **Gemma 3 시리즈**: 1B, 4B, 12B, 27B 등 다양한 크기
+- **LearnLM 2.0**: 학습 특화 모델
+- **실시간 업데이트**: 최신 모델 자동 감지 및 추가
+- **자유로운 선택**: 30개 이상의 모델 중 목적에 맞게 선택
 
 ### ⚙️ 사용자 설정
 - **단축키 커스터마이징**: 입력 필드에서 원하는 키 조합을 직접 입력
@@ -117,9 +130,13 @@ cd korean-error-correction
 ### Gemini API 설정 (선택사항)
 1. [Google AI Studio](https://aistudio.google.com/app/apikey)에서 **API Key 발급**
 2. 확장 프로그램 아이콘 클릭
-3. **"Gemini API 설정"** 섹션에서 API Key 입력 후 **저장**
-4. 🔄 버튼을 눌러 **사용 가능한 모델 목록** 확인
-5. 원하는 **모델 선택** (권장: `gemini-1.5-flash-latest`)
+3. **"🤖 AI 엔진 설정"** 섹션에서 API Key 입력 후 **저장**
+4. 🔄 버튼을 눌러 **30개 이상의 모델 목록** 자동 로드
+5. 드롭다운에서 원하는 **모델 선택**:
+   - **빠른 응답**: `gemini-2.0-flash-exp`, `gemini-flash-latest`
+   - **고품질**: `gemini-2.5-pro-preview`, `gemini-pro-latest`
+   - **실험적 기능**: Image Generation, TTS 지원 모델
+   - **경량 모델**: Gemma 3 시리즈 (1B, 4B 등)
 
 ### 팝업 테스트 기능
 1. 확장 프로그램 아이콘 클릭
