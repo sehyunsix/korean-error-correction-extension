@@ -1638,10 +1638,179 @@ if (document.readyState === 'loading') {
   }
 }
 
+// ========== 드래그 시 호버 버튼 표시 ==========
+
+let floatingButton = null;
+let selectionTimer = null;
+
+// 호버 버튼 제거
+function removeFloatingButton() {
+  if (floatingButton && floatingButton.parentNode) {
+    floatingButton.remove();
+    floatingButton = null;
+  }
+}
+
+// 호버 버튼 생성 및 표시
+function showFloatingButton(x, y, selectedText, selectionInfo) {
+  // 기존 버튼 제거
+  removeFloatingButton();
+  
+  // 버튼 생성
+  floatingButton = document.createElement('div');
+  floatingButton.id = 'korean-spell-floating-button';
+  floatingButton.style.cssText = `
+    position: fixed;
+    left: ${x}px;
+    top: ${y}px;
+    background: linear-gradient(135deg, #15C39A 0%, #0FA784 100%);
+    color: white;
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 999999;
+    box-shadow: 0 4px 12px rgba(21, 195, 154, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    transition: all 0.2s ease;
+    animation: floatingButtonFadeIn 0.2s ease;
+    user-select: none;
+  `;
+  
+  floatingButton.innerHTML = `
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+    <span>맞춤법 검사</span>
+  `;
+  
+  // 애니메이션 스타일 추가
+  if (!document.getElementById('floating-button-styles')) {
+    const style = document.createElement('style');
+    style.id = 'floating-button-styles';
+    style.textContent = `
+      @keyframes floatingButtonFadeIn {
+        from {
+          opacity: 0;
+          transform: scale(0.8) translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  // 호버 효과
+  floatingButton.addEventListener('mouseenter', () => {
+    floatingButton.style.background = 'linear-gradient(135deg, #13B389 0%, #0D8A6E 100%)';
+    floatingButton.style.transform = 'scale(1.05) translateY(-2px)';
+    floatingButton.style.boxShadow = '0 6px 16px rgba(21, 195, 154, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.2)';
+  });
+  
+  floatingButton.addEventListener('mouseleave', () => {
+    floatingButton.style.background = 'linear-gradient(135deg, #15C39A 0%, #0FA784 100%)';
+    floatingButton.style.transform = 'scale(1) translateY(0)';
+    floatingButton.style.boxShadow = '0 4px 12px rgba(21, 195, 154, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)';
+  });
+  
+  // 클릭 이벤트
+  floatingButton.addEventListener('click', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log('🖱️ 호버 버튼 클릭!');
+    console.log('📝 선택된 텍스트:', selectedText);
+    
+    // 버튼 제거
+    removeFloatingButton();
+    
+    // 맞춤법 검사 실행
+    try {
+      await highlightErrorsWithSavedSelection(document.body, selectionInfo);
+    } catch (error) {
+      console.error('❌ 맞춤법 검사 오류:', error);
+    }
+  });
+  
+  document.body.appendChild(floatingButton);
+}
+
+// 텍스트 선택 감지
+document.addEventListener('mouseup', (e) => {
+  // 타이머 클리어
+  if (selectionTimer) {
+    clearTimeout(selectionTimer);
+  }
+  
+  // 약간의 딜레이 후 체크 (selection이 안정화되도록)
+  selectionTimer = setTimeout(() => {
+    const selection = window.getSelection();
+    const selectedText = selection?.toString()?.trim();
+    
+    // 선택된 텍스트가 없거나 호버 버튼을 클릭한 경우
+    if (!selectedText || e.target?.closest('#korean-spell-floating-button')) {
+      return;
+    }
+    
+    // 한글이 포함되어 있는지 확인
+    if (!/[가-힣]/.test(selectedText)) {
+      removeFloatingButton();
+      return;
+    }
+    
+    // 너무 짧거나 긴 텍스트는 제외
+    if (selectedText.length < 2 || selectedText.length > 5000) {
+      removeFloatingButton();
+      return;
+    }
+    
+    // 선택 정보 저장
+    const savedSelectionInfo = getSelectedText();
+    
+    // 마우스 위치에서 약간 아래에 버튼 표시
+    const x = Math.min(e.clientX + 10, window.innerWidth - 150);
+    const y = Math.min(e.clientY + 10, window.innerHeight - 50);
+    
+    showFloatingButton(x, y, selectedText, savedSelectionInfo);
+  }, 100);
+});
+
+// selection 해제 시 버튼 제거
+document.addEventListener('selectionchange', () => {
+  const selection = window.getSelection();
+  if (!selection || !selection.toString().trim()) {
+    // 약간의 딜레이 후 제거 (버튼 클릭 시간 확보)
+    setTimeout(() => {
+      const currentSelection = window.getSelection();
+      if (!currentSelection || !currentSelection.toString().trim()) {
+        removeFloatingButton();
+      }
+    }, 200);
+  }
+});
+
+// 스크롤 시 버튼 제거
+document.addEventListener('scroll', removeFloatingButton, { passive: true });
+
+// 클릭 시 버튼 제거 (버튼 자체 클릭 제외)
+document.addEventListener('mousedown', (e) => {
+  if (!e.target?.closest('#korean-spell-floating-button')) {
+    removeFloatingButton();
+  }
+}, { capture: true });
+
 // 확장 프로그램 로드 확인
 console.log('');
 console.log('🎉 한글 맞춤법 검사기 Content Script 로드 완료!');
 console.log('⌨️  단축키 Cmd+E (Mac) / Ctrl+E (Windows) - 간편해졌습니다!');
+console.log('🖱️  텍스트 드래그 → 호버 버튼 클릭');
 console.log('🖱️  또는 텍스트 선택 후 우클릭 → 맞춤법 검사');
 console.log('✅ Window + Document + Body 3중 리스너 등록');
 console.log('📍 Run at: document_start');
