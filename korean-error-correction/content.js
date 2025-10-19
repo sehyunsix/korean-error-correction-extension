@@ -1484,7 +1484,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   } else if (request.action === 'updateShortcut') {
     // 단축키 업데이트
     CURRENT_SHORTCUT_KEY = request.shortcutKey || 'E';
-    console.log('⌨️ 단축키 업데이트:', CURRENT_SHORTCUT_KEY);
+    CURRENT_SHORTCUT_STRING = request.shortcutString || 'Cmd+E';
+    console.log('⌨️ 단축키 업데이트:', CURRENT_SHORTCUT_STRING);
     sendResponse({ success: true });
   } else {
     console.log('❓ [CONTENT] 알 수 없는 액션:', request.action);
@@ -1493,36 +1494,62 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // 현재 단축키 설정 (전역 변수)
 let CURRENT_SHORTCUT_KEY = 'E'; // 기본값
+let CURRENT_SHORTCUT_STRING = 'Cmd+E'; // 전체 단축키 문자열
 
 // 단축키 설정 불러오기
 async function loadShortcutKey() {
   try {
-    const result = await chrome.storage.sync.get(['shortcutKey']);
+    const result = await chrome.storage.sync.get(['shortcutKey', 'shortcutString']);
     CURRENT_SHORTCUT_KEY = result.shortcutKey || 'E';
-    console.log('⌨️ 단축키 설정 로드:', CURRENT_SHORTCUT_KEY);
+    CURRENT_SHORTCUT_STRING = result.shortcutString || 'Cmd+E';
+    console.log('⌨️ 단축키 설정 로드:', CURRENT_SHORTCUT_STRING);
   } catch (error) {
     console.error('단축키 설정 불러오기 실패:', error);
     CURRENT_SHORTCUT_KEY = 'E';
+    CURRENT_SHORTCUT_STRING = 'Cmd+E';
   }
 }
 
 // 초기화 시 단축키 불러오기
 loadShortcutKey();
 
+// 현재 키 이벤트를 문자열로 변환
+function getCurrentShortcutString(e) {
+  const parts = [];
+  
+  if (e.metaKey || e.ctrlKey) {
+    parts.push(e.metaKey ? 'Cmd' : 'Ctrl');
+  }
+  if (e.altKey) {
+    parts.push(e.metaKey ? 'Option' : 'Alt');
+  }
+  if (e.shiftKey) {
+    parts.push('Shift');
+  }
+  
+  if (e.key && e.key.length === 1 && e.key !== ' ') {
+    parts.push(e.key.toUpperCase());
+  } else if (e.key && !['Control', 'Meta', 'Alt', 'Shift'].includes(e.key)) {
+    parts.push(e.key);
+  }
+  
+  return parts.join('+');
+}
+
 // 키보드 단축키 감지 함수
 async function handleShortcut(e) {
-  // 설정된 키와 매칭 (대소문자 무시)
-  const pressedKey = e.key.toUpperCase();
-  const targetKey = CURRENT_SHORTCUT_KEY.toUpperCase();
+  // 수식키만 누른 경우는 무시
+  if (['Control', 'Meta', 'Alt', 'Shift'].includes(e.key)) {
+    return;
+  }
   
-  // Cmd+Shift+Key (Mac) 또는 Ctrl+Shift+Key (Windows/Linux)
-  const hasModifiers = (e.metaKey || e.ctrlKey) && e.shiftKey;
-  const isTargetKey = pressedKey === targetKey;
+  // 현재 눌린 키 조합을 문자열로 변환
+  const currentShortcut = getCurrentShortcutString(e);
   
-  if (hasModifiers && isTargetKey) {
+  // 저장된 단축키와 비교
+  if (currentShortcut === CURRENT_SHORTCUT_STRING) {
     // 🔥🔥🔥 최우선: 즉시 selection 저장 (로그보다 먼저!)
-    const modifier = e.metaKey ? 'Cmd' : 'Ctrl';
-    console.log(`⌨️⌨️⌨️ 단축키 감지! ${modifier}+Shift+${targetKey} ⌨️⌨️⌨️`);
+    console.log(`⌨️⌨️⌨️ 단축키 감지! ${currentShortcut} ⌨️⌨️⌨️`);
     // 이벤트 차단보다도 먼저 selection을 캡처해야 함
     const activeElement = document.activeElement;
 
@@ -1532,7 +1559,7 @@ async function handleShortcut(e) {
     const windowSelection = window.getSelection();
 
     console.log('');
-    console.log(`⌨️⌨️⌨️ 단축키 감지! ${modifier}+Shift+${targetKey} ⌨️⌨️⌨️`);
+    console.log(`⌨️⌨️⌨️ 단축키 감지! ${currentShortcut} ⌨️⌨️⌨️`);
     console.log('💾 즉시 저장한 selection:', windowSelection?.toString()?.substring(0, 50) || '(없음)');
     console.log('💾 savedText 길이:', savedText?.length || 0);
     console.log('💾 activeElement:', activeElement?.tagName);

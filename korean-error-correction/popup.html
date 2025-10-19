@@ -260,7 +260,7 @@
       <div class="how-to-use">
         <p>
           <strong style="color: #15C39A;">💡 사용 방법</strong><br>
-          • 텍스트를 선택하고 <span class="kbd" id="howToShortcut">Cmd+Shift+E</span> 누르기<br>
+          • 텍스트를 선택하고 <span class="kbd" id="howToShortcut">Cmd+E</span> 누르기<br>
           • <span style="color: #ef4444;">빨간 밑줄</span>은 오류, <span style="color: #15C39A;">초록 밑줄</span>은 수정됨
         </p>
       </div>
@@ -321,39 +321,23 @@
     <div class="section">
       <div class="section-title">⌨️ 단축키 설정</div>
       <div style="margin-bottom: 12px;">
-        <label>검사 단축키</label>
+        <label>검사 단축키 (클릭 후 원하는 키 조합을 누르세요)</label>
         <div style="display: flex; gap: 8px; align-items: center;">
-          <div style="flex: 1; display: flex; gap: 8px; align-items: center;">
-            <span style="font-size: 13px; color: #6b7280; font-weight: 500; white-space: nowrap;" id="modifierDisplay">Cmd+Shift</span>
-            <span style="font-size: 13px; color: #9ca3af;">+</span>
-            <select id="shortcutKey" style="flex: 1;">
-              <option value="E">E</option>
-              <option value="Q">Q</option>
-              <option value="R">R</option>
-              <option value="T">T</option>
-              <option value="Y">Y</option>
-              <option value="D">D</option>
-              <option value="F">F</option>
-              <option value="G">G</option>
-              <option value="H">H</option>
-              <option value="J">J</option>
-              <option value="K">K</option>
-              <option value="L">L</option>
-              <option value="Z">Z</option>
-              <option value="X">X</option>
-              <option value="C">C</option>
-              <option value="V">V</option>
-              <option value="B">B</option>
-              <option value="N">N</option>
-              <option value="M">M</option>
-            </select>
-          </div>
+          <input 
+            type="text" 
+            id="shortcutInput" 
+            readonly 
+            placeholder="클릭 후 키 조합 입력..." 
+            style="flex: 1; cursor: pointer; text-align: center; font-weight: 600; background: #f9fafb;"
+            value="Cmd+E"
+          >
           <button id="saveShortcut" style="width: auto; padding: 10px 16px; white-space: nowrap; background: #15C39A; color: white;">
             저장
           </button>
         </div>
-        <div style="font-size: 11px; color: #6b7280; margin-top: 6px; background: #f9fafb; padding: 8px; border-radius: 6px;" id="shortcutInfo">
-          현재 단축키: <span style="color: #15C39A; font-weight: 600;" id="currentShortcut">Cmd+Shift+E</span>
+        <div style="font-size: 11px; color: #6b7280; margin-top: 6px; background: #f9fafb; padding: 8px; border-radius: 6px;">
+          💡 <strong>팁:</strong> Cmd/Ctrl + 알파벳 키 조합 권장 (예: Cmd+E, Cmd+K)<br>
+          현재 설정: <span style="color: #15C39A; font-weight: 600;" id="currentShortcut">Cmd+E</span>
         </div>
       </div>
     </div>

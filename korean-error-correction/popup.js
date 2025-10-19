@@ -655,61 +655,148 @@ document.getElementById('clearBtn').addEventListener('click', async () => {
 
 // ========== 단축키 설정 ==========
 
-// OS 감지 및 수식키 표시
+// OS 감지
 function detectOS() {
   const platform = navigator.platform.toLowerCase();
   const isMac = platform.includes('mac');
   return isMac ? 'Mac' : 'Windows';
 }
 
-// 단축키 표시 업데이트
-function updateShortcutDisplay(key) {
-  const os = detectOS();
-  const modifier = os === 'Mac' ? 'Cmd+Shift' : 'Ctrl+Shift';
-  const modifierDisplay = document.getElementById('modifierDisplay');
-  const currentShortcut = document.getElementById('currentShortcut');
-  const howToShortcut = document.getElementById('howToShortcut');
+// 단축키를 문자열로 변환
+function getShortcutString(event) {
+  const parts = [];
+  const isMac = detectOS() === 'Mac';
   
-  if (modifierDisplay) {
-    modifierDisplay.textContent = modifier;
+  if (event.metaKey || event.ctrlKey) {
+    parts.push(isMac ? 'Cmd' : 'Ctrl');
   }
-  if (currentShortcut) {
-    currentShortcut.textContent = `${modifier}+${key}`;
+  if (event.altKey) {
+    parts.push(isMac ? 'Option' : 'Alt');
   }
-  if (howToShortcut) {
-    howToShortcut.textContent = `${modifier}+${key}`;
+  if (event.shiftKey) {
+    parts.push('Shift');
   }
+  
+  // 일반 키 추가 (수식키가 아닌 경우만)
+  if (event.key && event.key.length === 1 && event.key !== ' ') {
+    parts.push(event.key.toUpperCase());
+  } else if (event.key && !['Control', 'Meta', 'Alt', 'Shift'].includes(event.key)) {
+    parts.push(event.key);
+  }
+  
+  return parts.join('+');
+}
+
+// 단축키 파싱 (저장된 문자열에서 키만 추출)
+function parseShortcutKey(shortcutString) {
+  // "Cmd+E", "Ctrl+Shift+K" 같은 문자열에서 마지막 키만 추출
+  const parts = shortcutString.split('+');
+  return parts[parts.length - 1];
 }
 
 // 저장된 단축키 불러오기
 async function loadShortcutSetting() {
   try {
-    const result = await chrome.storage.sync.get(['shortcutKey']);
-    const key = result.shortcutKey || 'E'; // 기본값: E
+    const result = await chrome.storage.sync.get(['shortcutKey', 'shortcutString']);
+    const key = result.shortcutKey || 'E';
+    const shortcutString = result.shortcutString || (detectOS() === 'Mac' ? 'Cmd+E' : 'Ctrl+E');
     
-    const shortcutKeySelect = document.getElementById('shortcutKey');
-    if (shortcutKeySelect) {
-      shortcutKeySelect.value = key;
+    const shortcutInput = document.getElementById('shortcutInput');
+    const currentShortcut = document.getElementById('currentShortcut');
+    const howToShortcut = document.getElementById('howToShortcut');
+    
+    if (shortcutInput) {
+      shortcutInput.value = shortcutString;
     }
-    
-    updateShortcutDisplay(key);
+    if (currentShortcut) {
+      currentShortcut.textContent = shortcutString;
+    }
+    if (howToShortcut) {
+      howToShortcut.textContent = shortcutString;
+    }
   } catch (error) {
     console.error('단축키 불러오기 실패:', error);
-    updateShortcutDisplay('E');
   }
 }
+
+// 단축키 입력 감지
+const shortcutInput = document.getElementById('shortcutInput');
+let capturedShortcut = '';
+
+shortcutInput.addEventListener('focus', () => {
+  shortcutInput.style.borderColor = '#15C39A';
+  shortcutInput.style.boxShadow = '0 0 0 3px rgba(21, 195, 154, 0.1)';
+  shortcutInput.placeholder = '키 조합을 누르세요...';
+});
+
+shortcutInput.addEventListener('blur', () => {
+  shortcutInput.style.borderColor = '';
+  shortcutInput.style.boxShadow = '';
+});
+
+shortcutInput.addEventListener('keydown', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  // 수식키만 누른 경우는 무시
+  if (['Control', 'Meta', 'Alt', 'Shift'].includes(e.key)) {
+    return;
+  }
+  
+  // 단축키 문자열 생성
+  const shortcutString = getShortcutString(e);
+  
+  // 유효한 단축키인지 확인 (최소한 Cmd/Ctrl이 포함되어야 함)
+  if (!shortcutString.includes('Cmd') && !shortcutString.includes('Ctrl')) {
+    shortcutInput.value = '⚠️ Cmd 또는 Ctrl을 포함해주세요';
+    setTimeout(() => {
+      shortcutInput.value = capturedShortcut || '';
+    }, 1000);
+    return;
+  }
+  
+  capturedShortcut = shortcutString;
+  shortcutInput.value = shortcutString;
+  shortcutInput.style.color = '#15C39A';
+  
+  console.log('단축키 캡처:', shortcutString);
+});
 
 // 단축키 저장
 document.getElementById('saveShortcut').addEventListener('click', async () => {
   const statusDiv = document.getElementById('status');
-  const shortcutKey = document.getElementById('shortcutKey').value;
+  const shortcutString = shortcutInput.value;
+  
+  if (!shortcutString || !shortcutString.includes('+')) {
+    statusDiv.className = 'error';
+    statusDiv.textContent = '유효한 단축키를 입력해주세요.';
+    setTimeout(() => {
+      statusDiv.className = '';
+      statusDiv.textContent = '';
+    }, 2000);
+    return;
+  }
   
   try {
-    // 저장
-    await chrome.storage.sync.set({ shortcutKey: shortcutKey });
+    // 키만 추출 (저장용)
+    const key = parseShortcutKey(shortcutString);
+    
+    // 저장 (전체 문자열과 키 모두 저장)
+    await chrome.storage.sync.set({ 
+      shortcutKey: key,
+      shortcutString: shortcutString
+    });
     
     // UI 업데이트
-    updateShortcutDisplay(shortcutKey);
+    const currentShortcut = document.getElementById('currentShortcut');
+    const howToShortcut = document.getElementById('howToShortcut');
+    
+    if (currentShortcut) {
+      currentShortcut.textContent = shortcutString;
+    }
+    if (howToShortcut) {
+      howToShortcut.textContent = shortcutString;
+    }
     
     // 모든 탭에 단축키 변경 알림
     const tabs = await chrome.tabs.query({});
@@ -717,7 +804,8 @@ document.getElementById('saveShortcut').addEventListener('click', async () => {
       try {
         await chrome.tabs.sendMessage(tab.id, { 
           action: 'updateShortcut', 
-          shortcutKey: shortcutKey 
+          shortcutKey: key,
+          shortcutString: shortcutString
         });
       } catch (e) {
         // 일부 탭은 메시지를 받을 수 없을 수 있음 (무시)
@@ -725,7 +813,7 @@ document.getElementById('saveShortcut').addEventListener('click', async () => {
     }
     
     statusDiv.className = 'success';
-    statusDiv.textContent = `✅ 단축키가 저장되었습니다! (${document.getElementById('currentShortcut').textContent})`;
+    statusDiv.textContent = `✅ 단축키가 저장되었습니다! (${shortcutString})`;
     
     setTimeout(() => {
       statusDiv.className = '';
