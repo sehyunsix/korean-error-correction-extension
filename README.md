@@ -7,7 +7,9 @@
 
 ## 🎬 데모
 
-![사용 데모](korean-error-correction-ediet-3.gif)
+
+https://github.com/user-attachments/assets/e815fab7-b69f-4727-b937-35970ae591e6
+
 
 *텍스트를 선택하고 `Cmd+Shift+E`를 누르면 맞춤법 검사가 실행됩니다!*
 
@@ -15,13 +17,15 @@
 
 ### 확장 프로그램 팝업
 
-![팝업 화면](screenshots/popup-1280x800.png)
+<img width="459" height="740" alt="Screenshot 2025-10-19 at 10 32 24 AM" src="https://github.com/user-attachments/assets/2a426edc-7732-4de8-bf1d-f50234b7103d" />
+
 
 *Gemini API 설정, 모델 선택, 텍스트 교정 테스트 기능을 제공합니다.*
 
 ### 맞춤법 교정 결과
 
-![교정 결과](screenshots/correct-1280x800.png)
+<img width="853" height="1034" alt="Screenshot 2025-10-19 at 10 33 34 AM" src="https://github.com/user-attachments/assets/030818fe-005e-48cf-91f0-efb9b2dcbe07" />
+
 
 *선택한 텍스트의 오류를 자동으로 감지하고 교정 제안을 제공합니다.*
 
