@@ -1481,22 +1481,48 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('⚠️ [CONTENT] 오류 알림 요청');
     alert('⚠️ 확장 프로그램이 아직 완전히 로드되지 않았습니다.\n\n페이지를 새로고침(F5)하고 다시 시도해주세요.');
     sendResponse({ success: true });
+  } else if (request.action === 'updateShortcut') {
+    // 단축키 업데이트
+    CURRENT_SHORTCUT_KEY = request.shortcutKey || 'E';
+    console.log('⌨️ 단축키 업데이트:', CURRENT_SHORTCUT_KEY);
+    sendResponse({ success: true });
   } else {
     console.log('❓ [CONTENT] 알 수 없는 액션:', request.action);
   }
 });
 
+// 현재 단축키 설정 (전역 변수)
+let CURRENT_SHORTCUT_KEY = 'E'; // 기본값
+
+// 단축키 설정 불러오기
+async function loadShortcutKey() {
+  try {
+    const result = await chrome.storage.sync.get(['shortcutKey']);
+    CURRENT_SHORTCUT_KEY = result.shortcutKey || 'E';
+    console.log('⌨️ 단축키 설정 로드:', CURRENT_SHORTCUT_KEY);
+  } catch (error) {
+    console.error('단축키 설정 불러오기 실패:', error);
+    CURRENT_SHORTCUT_KEY = 'E';
+  }
+}
+
+// 초기화 시 단축키 불러오기
+loadShortcutKey();
+
 // 키보드 단축키 감지 함수
 async function handleShortcut(e) {
-  // Cmd+E (Mac) 또는 Ctrl+E (Windows/Linux) - Shift 불필요!
-  const isEKey = e.key === 'E' || e.key === 'e' || e.key === 'ㄸ' || e.key === 'ㄷ' ;
-
-
-
+  // 설정된 키와 매칭 (대소문자 무시)
+  const pressedKey = e.key.toUpperCase();
+  const targetKey = CURRENT_SHORTCUT_KEY.toUpperCase();
   
-  if ((e.metaKey || e.ctrlKey||e.shiftKey) && isEKey ) {
+  // Cmd+Shift+Key (Mac) 또는 Ctrl+Shift+Key (Windows/Linux)
+  const hasModifiers = (e.metaKey || e.ctrlKey) && e.shiftKey;
+  const isTargetKey = pressedKey === targetKey;
+  
+  if (hasModifiers && isTargetKey) {
     // 🔥🔥🔥 최우선: 즉시 selection 저장 (로그보다 먼저!)
-    console.log('⌨️⌨️⌨️ 단축키 감지! Cmd+E ⌨️⌨️⌨️');
+    const modifier = e.metaKey ? 'Cmd' : 'Ctrl';
+    console.log(`⌨️⌨️⌨️ 단축키 감지! ${modifier}+Shift+${targetKey} ⌨️⌨️⌨️`);
     // 이벤트 차단보다도 먼저 selection을 캡처해야 함
     const activeElement = document.activeElement;
 
@@ -1506,7 +1532,7 @@ async function handleShortcut(e) {
     const windowSelection = window.getSelection();
 
     console.log('');
-    console.log('⌨️⌨️⌨️ 단축키 감지! Cmd+E ⌨️⌨️⌨️');
+    console.log(`⌨️⌨️⌨️ 단축키 감지! ${modifier}+Shift+${targetKey} ⌨️⌨️⌨️`);
     console.log('💾 즉시 저장한 selection:', windowSelection?.toString()?.substring(0, 50) || '(없음)');
     console.log('💾 savedText 길이:', savedText?.length || 0);
     console.log('💾 activeElement:', activeElement?.tagName);

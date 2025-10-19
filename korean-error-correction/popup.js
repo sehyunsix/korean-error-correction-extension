@@ -687,3 +687,91 @@ document.getElementById('clearBtn').addEventListener('click', async () => {
   }
 });
 
+// ========== 단축키 설정 ==========
+
+// OS 감지 및 수식키 표시
+function detectOS() {
+  const platform = navigator.platform.toLowerCase();
+  const isMac = platform.includes('mac');
+  return isMac ? 'Mac' : 'Windows';
+}
+
+// 단축키 표시 업데이트
+function updateShortcutDisplay(key) {
+  const os = detectOS();
+  const modifier = os === 'Mac' ? 'Cmd+Shift' : 'Ctrl+Shift';
+  const modifierDisplay = document.getElementById('modifierDisplay');
+  const currentShortcut = document.getElementById('currentShortcut');
+  const howToShortcut = document.getElementById('howToShortcut');
+  
+  if (modifierDisplay) {
+    modifierDisplay.textContent = modifier;
+  }
+  if (currentShortcut) {
+    currentShortcut.textContent = `${modifier}+${key}`;
+  }
+  if (howToShortcut) {
+    howToShortcut.textContent = `${modifier}+${key}`;
+  }
+}
+
+// 저장된 단축키 불러오기
+async function loadShortcutSetting() {
+  try {
+    const result = await chrome.storage.sync.get(['shortcutKey']);
+    const key = result.shortcutKey || 'E'; // 기본값: E
+    
+    const shortcutKeySelect = document.getElementById('shortcutKey');
+    if (shortcutKeySelect) {
+      shortcutKeySelect.value = key;
+    }
+    
+    updateShortcutDisplay(key);
+  } catch (error) {
+    console.error('단축키 불러오기 실패:', error);
+    updateShortcutDisplay('E');
+  }
+}
+
+// 단축키 저장
+document.getElementById('saveShortcut').addEventListener('click', async () => {
+  const statusDiv = document.getElementById('status');
+  const shortcutKey = document.getElementById('shortcutKey').value;
+  
+  try {
+    // 저장
+    await chrome.storage.sync.set({ shortcutKey: shortcutKey });
+    
+    // UI 업데이트
+    updateShortcutDisplay(shortcutKey);
+    
+    // 모든 탭에 단축키 변경 알림
+    const tabs = await chrome.tabs.query({});
+    for (const tab of tabs) {
+      try {
+        await chrome.tabs.sendMessage(tab.id, { 
+          action: 'updateShortcut', 
+          shortcutKey: shortcutKey 
+        });
+      } catch (e) {
+        // 일부 탭은 메시지를 받을 수 없을 수 있음 (무시)
+      }
+    }
+    
+    statusDiv.className = 'success';
+    statusDiv.textContent = `✅ 단축키가 저장되었습니다! (${document.getElementById('currentShortcut').textContent})`;
+    
+    setTimeout(() => {
+      statusDiv.className = '';
+      statusDiv.textContent = '';
+    }, 3000);
+  } catch (error) {
+    statusDiv.className = 'error';
+    statusDiv.textContent = '단축키 저장에 실패했습니다.';
+    console.error('단축키 저장 오류:', error);
+  }
+});
+
+// 페이지 로드 시 단축키 설정 불러오기
+loadShortcutSetting();
+
