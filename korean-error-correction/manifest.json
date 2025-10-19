@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "한글 맞춤법 검사기",
-  "version": "6.1.0",
-  "version_name": "6.1.0 - 커스텀 단축키 설정",
+  "version": "6.1.1",
+  "version_name": "6.1.1 - API 서버 체크 제거",
   "description": "선택한 텍스트를 Gemini AI로 검사하고 자동 교정하는 맞춤법 검사기",
   "permissions": [
     "activeTab",

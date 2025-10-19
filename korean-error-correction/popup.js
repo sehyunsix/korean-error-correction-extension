@@ -1,28 +1,8 @@
-// API 서버 상태 확인
-async function checkAPIServer() {
-  try {
-    // AbortController를 사용한 타임아웃 (CSP 안전)
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
-    
-    const response = await fetch('http://localhost:3000/health', {
-      method: 'GET',
-      signal: controller.signal
-    });
-    
-    clearTimeout(timeoutId);
-    return response.ok;
-  } catch (error) {
-    return false;
-  }
-}
-
-// API 상태 표시
+// API 상태 표시 (서버 체크 제거됨)
 async function updateAPIStatus() {
   const apiStatusSection = document.getElementById('apiStatusSection');
   const apiStatusDiv = document.getElementById('apiStatus');
   const apiModeSpan = document.getElementById('apiMode');
-  const serverStatusText = document.getElementById('serverStatusText');
   const apiServerStatusDiv = document.getElementById('apiServerStatus');
   
   // content.js에서 USE_API 값 가져오기
@@ -35,25 +15,11 @@ async function updateAPIStatus() {
       
       if (response.useAPI) {
         // API 모드
-        const serverOnline = await checkAPIServer();
-        
-        if (serverOnline) {
-          apiStatusDiv.style.backgroundColor = '#d1fae5';
-          apiStatusDiv.style.borderColor = '#a7f3d0';
-          apiModeSpan.textContent = '🤖 AI (ET5)';
-          apiModeSpan.style.color = '#065f46';
-          serverStatusText.textContent = '🟢 온라인';
-          serverStatusText.style.color = '#065f46';
-          apiServerStatusDiv.style.display = 'flex';
-        } else {
-          apiStatusDiv.style.backgroundColor = '#fef3c7';
-          apiStatusDiv.style.borderColor = '#fcd34d';
-          apiModeSpan.textContent = '⚠️ API → 룰 베이스';
-          apiModeSpan.style.color = '#92400e';
-          serverStatusText.textContent = '🔴 오프라인 (폴백)';
-          serverStatusText.style.color = '#991b1b';
-          apiServerStatusDiv.style.display = 'flex';
-        }
+        apiStatusDiv.style.backgroundColor = '#d1fae5';
+        apiStatusDiv.style.borderColor = '#a7f3d0';
+        apiModeSpan.textContent = '🤖 Gemini AI';
+        apiModeSpan.style.color = '#065f46';
+        apiServerStatusDiv.style.display = 'none';
       } else {
         // 룰 베이스 모드
         apiStatusDiv.style.backgroundColor = '#dbeafe';
