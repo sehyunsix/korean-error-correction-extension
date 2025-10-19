@@ -91,23 +91,54 @@ Gemini 2.5, 2.0, Gemma 3, LearnLM 등 **30개 이상의 최신 AI 모델**을 �
 
 ## 📦 설치 방법
 
-### 1. Chrome 웹 스토어 (예정)
-곧 Chrome 웹 스토어에서 다운로드 가능합니다.
+### 방법 1: Chrome 웹 스토어 (예정)
+곧 Chrome 웹 스토어에서 원클릭 설치가 가능합니다.
 
-### 2. 로컬 설치
+### 방법 2: 로컬 설치 (개발자용)
+
+#### Step 1: 레포지토리 다운로드
 ```bash
-# 1. 레포지토리 클론
-git clone https://github.com/your-username/korean-error-correction.git
-cd korean-error-correction
+# Git으로 클론
+git clone https://github.com/sehyunsix/korean-error-correction-extension.git
+cd korean-error-correction-extension
 
-# 2. Chrome에서 설치
-# chrome://extensions/ 접속
-# → "개발자 모드" 활성화
-# → "압축해제된 확장 프로그램을 로드합니다" 클릭
-# → "korean-error-correction" 폴더 선택
+# 또는 ZIP 다운로드
+# https://github.com/sehyunsix/korean-error-correction-extension
+# → Code → Download ZIP → 압축 해제
 ```
 
-## 🚀 사용 방법
+#### Step 2: Chrome에 확장 프로그램 로드
+1. Chrome 브라우저에서 `chrome://extensions/` 접속
+2. 우측 상단의 **"개발자 모드"** 토글 활성화
+3. **"압축해제된 확장 프로그램을 로드합니다"** 버튼 클릭
+4. 다운로드한 폴더 내의 **`korean-error-correction`** 폴더 선택
+5. ✅ 설치 완료! 브라우저 우측 상단에 확장 프로그램 아이콘 표시
+
+#### Step 3: 초기 설정 (선택사항)
+1. 확장 프로그램 아이콘 클릭
+2. **"⌨️ 단축키 설정"**에서 원하는 단축키 설정 (권장: F1 또는 Cmd+E)
+3. **"🤖 AI 엔진 설정"**에서 Gemini API Key 입력 (더 나은 품질을 원할 경우)
+4. 🔄 버튼으로 30개 이상의 AI 모델 목록 로드
+5. 원하는 모델 선택 후 **저장**
+
+> 💡 **팁**: API Key 없이도 기본 기능 사용 가능합니다!
+
+## ⚡ 빠른 시작 (5초 완성!)
+
+설치 후 바로 사용하는 방법:
+
+1. **아무 웹페이지**에서 한글 텍스트 드래그 (예: "이거는 맞춤뻡이 틀렸다")
+2. 나타난 **"맞춤법 검사" 버튼** 클릭 ✨
+3. **교정 결과 확인** 후 원하는 수정만 적용!
+
+> 🎉 **끝!** 더 이상의 설정은 필요 없습니다.
+
+### 추가 설정 (선택)
+- **단축키 변경**: 확장 프로그램 아이콘 → ⌨️ 단축키 설정
+- **AI 모델 선택**: API Key 입력 → 30+ 모델 중 선택
+- **테스트**: 팝업에서 즉시 테스트 가능
+
+## 🚀 사용 방법 (상세)
 
 ### 방법 1: 플로팅 버튼 (권장! 🆕)
 1. 웹페이지에서 검사할 **한글 텍스트를 드래그**
@@ -153,40 +184,60 @@ cd korean-error-correction
 ## 🏗️ 프로젝트 구조
 
 ```
-korean-error-correction/
-├── korean-error-correction/        # 확장 프로그램 메인
-│   ├── modules/                   # 모듈화된 코드
-│   │   ├── config.js              # 설정
-│   │   ├── storage.js             # Storage 관리
-│   │   ├── gemini-api.js          # Gemini API
-│   │   ├── text-utils.js          # 텍스트 유틸리티
-│   │   └── ui-highlight.js        # UI 하이라이트
-│   ├── docs/                      # 문서
-│   │   ├── API_ERROR_GUIDE.md     # API 오류 해결 가이드
-│   │   ├── LOG_GUIDE.md           # 로그 출력 가이드
-│   │   └── PRE_COMMIT_GUIDE.md    # Pre-commit hook 가이드
-│   ├── content.js                 # Content script (메인 로직)
-│   ├── popup.js                   # Popup UI 로직
-│   ├── background.js              # Background script
-│   ├── popup.html                 # Popup HTML
-│   ├── styles.css                 # CSS
-│   └── manifest.json              # Extension manifest
-├── docs/                          # 프로젝트 문서
-│   ├── CHANGELOG.md               # 변경 이력
-│   ├── SETUP_GUIDE.md             # 설치 가이드
-│   └── SYNTAX_CHECK.md            # Syntax 검사 가이드
-└── README.md                      # 이 파일
+korean-error-correction-extension/
+├── korean-error-correction/        # 📦 확장 프로그램 메인
+│   ├── modules/                   # 🧩 모듈화된 코드
+│   │   ├── config.js              # ⚙️ 설정 및 규칙
+│   │   ├── storage.js             # 💾 Chrome Storage API 관리
+│   │   ├── gemini-api.js          # 🤖 Gemini API (30+ 모델)
+│   │   ├── text-utils.js          # 📝 텍스트 처리 유틸리티
+│   │   └── ui-highlight.js        # 🎨 오류 하이라이트 & 툴팁
+│   ├── docs/                      # 📚 문서
+│   │   ├── API_ERROR_GUIDE.md     # API 오류 해결
+│   │   ├── LOG_GUIDE.md           # 로그 가이드
+│   │   └── PRE_COMMIT_GUIDE.md    # Pre-commit hook
+│   ├── content.js                 # 🎯 Content script
+│   │                               #   - 플로팅 버튼 (v6.3.0)
+│   │                               #   - 커스텀 단축키 (v6.2.0)
+│   │                               #   - 선택적 수정 적용 (v6.0.0)
+│   │                               #   - 2단 레이아웃 모달
+│   ├── popup.js                   # 🎨 Popup UI 로직
+│   │                               #   - AI 모델 선택 (30+ 모델)
+│   │                               #   - 단축키 설정
+│   │                               #   - 테스트 기능
+│   ├── popup.html                 # 📄 Popup HTML (Grammarly 스타일)
+│   ├── background.js              # ⚡ Background script
+│   ├── styles.css                 # 🎨 CSS 스타일
+│   └── manifest.json              # 📋 Extension manifest (v6.3.0)
+├── model-select.png               # 🖼️ AI 모델 선택 스크린샷
+├── docs/                          # 📖 프로젝트 문서
+│   ├── CHANGELOG.md               # 📝 변경 이력
+│   ├── SETUP_GUIDE.md             # 🚀 설치 가이드
+│   └── SYNTAX_CHECK.md            # ✅ Syntax 검사
+└── README.md                      # 📘 이 파일
 ```
 
-## 🎨 모듈 구조
+## 🎨 핵심 기능별 코드 위치
 
-확장 프로그램은 **가독성과 유지보수**를 위해 모듈화되어 있습니다:
+### 플로팅 버튼 🆕
+- **파일**: `content.js` (라인 1641~1807)
+- **기능**: 텍스트 드래그 시 자동 버튼 표시
+- **포함**: Grammarly 스타일 UI, 애니메이션
 
-- **config.js**: 설정 및 규칙
-- **storage.js**: Chrome Storage API 관리
-- **gemini-api.js**: Gemini API 호출 및 오류 처리
-- **text-utils.js**: 텍스트 처리 유틸리티
-- **ui-highlight.js**: 오류 하이라이트 및 툴팁 UI
+### 선택적 수정 적용 🎯
+- **파일**: `content.js` (라인 213~524)
+- **기능**: 개별 수정 승인/거절, 네비게이션
+- **포함**: 상태 관리, 최종 텍스트 생성
+
+### 커스텀 단축키 ⌨️
+- **파일**: `content.js` (라인 1494~1549), `popup.js` (라인 656~830)
+- **기능**: 키보드 입력으로 단축키 설정
+- **포함**: 모든 키 조합 지원
+
+### AI 모델 선택 (30+ 모델) 🤖
+- **파일**: `modules/gemini-api.js`, `popup.js`
+- **기능**: Gemini API 모델 목록 자동 로드
+- **지원**: Gemini 2.5/2.0, Gemma 3, LearnLM
 
 ## 🛠️ 개발
 
