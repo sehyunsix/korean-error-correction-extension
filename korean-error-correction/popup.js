@@ -746,12 +746,8 @@ shortcutInput.addEventListener('keydown', (e) => {
   // 단축키 문자열 생성
   const shortcutString = getShortcutString(e);
   
-  // 유효한 단축키인지 확인 (최소한 Cmd/Ctrl이 포함되어야 함)
-  if (!shortcutString.includes('Cmd') && !shortcutString.includes('Ctrl')) {
-    shortcutInput.value = '⚠️ Cmd 또는 Ctrl을 포함해주세요';
-    setTimeout(() => {
-      shortcutInput.value = capturedShortcut || '';
-    }, 1000);
+  // 빈 문자열 체크
+  if (!shortcutString) {
     return;
   }
   
@@ -767,7 +763,7 @@ document.getElementById('saveShortcut').addEventListener('click', async () => {
   const statusDiv = document.getElementById('status');
   const shortcutString = shortcutInput.value;
   
-  if (!shortcutString || !shortcutString.includes('+')) {
+  if (!shortcutString || shortcutString.trim() === '') {
     statusDiv.className = 'error';
     statusDiv.textContent = '유효한 단축키를 입력해주세요.';
     setTimeout(() => {
@@ -778,8 +774,8 @@ document.getElementById('saveShortcut').addEventListener('click', async () => {
   }
   
   try {
-    // 키만 추출 (저장용)
-    const key = parseShortcutKey(shortcutString);
+    // 키만 추출 (저장용) - 단일 키인 경우 그대로 사용
+    const key = shortcutString.includes('+') ? parseShortcutKey(shortcutString) : shortcutString;
     
     // 저장 (전체 문자열과 키 모두 저장)
     await chrome.storage.sync.set({ 
